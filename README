@@ -1,0 +1,14 @@
+A small application around the Gtk WebKit Widget.
+
+Mod1+Left       Back
+Mod1+Right      Forward
+
+Ctrl+L          Location Bar
+Ctrl+K          Google Search
+Ctrl+U          Toggle Source
+
+Ctrl+F          Find
+F3              Find Next
+Shift+F3        Find Previous
+
+Escape          Close Command Bar
