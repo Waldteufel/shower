@@ -17,3 +17,5 @@ Escape          Close Command Bar
 Dependencies: GTK+ 2, Gtk-Webkit, libunique
 
 Similiar Projects: surf, luakit, uzbl, jumanji
+
+Best served with a tiling Window Manager like i3
