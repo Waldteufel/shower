@@ -22,6 +22,9 @@ Dependencies:
 * libunique from http://live.gnome.org/LibUnique
 * libsoup from http://live.gnome.org/LibSoup
 
-SSL trust checking is only available with libsoup>=2.4
+Sadly, some distributions ship .vapi header files
+that do not match the installed library versions.
+You might have to generate your own ones.
+
 
 Similiar Projects: surf, luakit, uzbl, jumanji
