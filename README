@@ -1,4 +1,5 @@
-A small application around the Gtk WebKit Widget.
+A small application around the Gtk WebKit Widget,
+best served with a tiling Window Manager like i3.
 
 Mod1+Left       Back
 Mod1+Right      Forward
@@ -14,8 +15,10 @@ Shift+F3        Find Previous
 Escape          Close Command Bar
 
 
-Dependencies: GTK+ 2, Gtk-Webkit, libunique
+Dependencies:
+* Vala from http://live.gnome.org/Vala
+* GTK+ 2.x from http://www.gtk.org/
+* WebKitGTK+ from http://webkitgtk.org/
+* LibUnique from http://live.gnome.org/LibUnique
 
 Similiar Projects: surf, luakit, uzbl, jumanji
-
-Best served with a tiling Window Manager like i3
