@@ -19,6 +19,9 @@ Dependencies:
 * Vala from http://live.gnome.org/Vala
 * GTK+ 2.x from http://www.gtk.org/
 * WebKitGTK+ from http://webkitgtk.org/
-* LibUnique from http://live.gnome.org/LibUnique
+* libunique from http://live.gnome.org/LibUnique
+* libsoup from http://live.gnome.org/LibSoup
+
+SSL trust checking is only available with libsoup>=2.4
 
 Similiar Projects: surf, luakit, uzbl, jumanji

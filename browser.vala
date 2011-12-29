@@ -234,9 +234,13 @@ class BrowserWindow : Gtk.Window {
    }
 
    private bool? is_trusted() {
+#if HAVE_SOUP24
       if (web.uri == null) return null;
       if (!https_regex.match(web.uri)) return null;
       return (web.get_main_frame().get_data_source().get_request().get_message().flags & Soup.MessageFlags.CERTIFICATE_TRUSTED) != 0;
+#else
+      return null;
+#endif
    }
 
    private void show_uri() {
