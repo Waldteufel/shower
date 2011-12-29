@@ -12,3 +12,8 @@ F3              Find Next
 Shift+F3        Find Previous
 
 Escape          Close Command Bar
+
+
+Dependencies: GTK+ 2, Gtk-Webkit, libunique
+
+Similiar Projects: surf, luakit, uzbl, jumanji
