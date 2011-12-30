@@ -4,6 +4,8 @@ abstract class Application : Unique.App {
 
    public Application(string name) {
       Object(name: name);
+
+      if (!this.is_running) this.initialize();
       
       this.message_received.connect((cmd, data, time) => {
          this.handle_cmd(data.get_text());
@@ -24,6 +26,7 @@ abstract class Application : Unique.App {
    }
 
    protected abstract void handle_cmd(string cmd);
+   protected abstract void initialize();
 
    public int run(string[] args) {
       var cmd = args.length > 1 ? args[1] : " ";
