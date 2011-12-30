@@ -64,11 +64,10 @@ class BrowserWindow : Gtk.Window {
       web.notify["title"].connect(() => { this.title = web.title ?? web.uri ?? "shower"; });
 
       web.hovering_over_link.connect(this.show_hover);
-      web.notify["load_status"].connect(this.show_uri);
       web.notify["uri"].connect(this.show_uri);
       
       web.notify["progress"].connect(this.show_progress);
-      web.notify["load_status"].connect(this.reset_search);
+      web.notify["load_status"].connect(this.reset_on_commit);
 
       web.create_web_view.connect(this.spawn_view);
       web.close_web_view.connect(() => { this.destroy(); return true; });
@@ -106,8 +105,8 @@ class BrowserWindow : Gtk.Window {
       this.key_press_event.connect(this.key_pressed);
    }
 
-   private void reset_search() {
-       if (web.load_status == WebKit.LoadStatus.COMMITTED)
+   private void reset_on_commit() {
+      if (web.load_status == WebKit.LoadStatus.COMMITTED)
          last_search = "";
    }
 
