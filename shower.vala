@@ -38,16 +38,20 @@ class BrowserApplication : Application {
             GtkScrolledWindow::scrollbar-spacing = 0
          }
 
+         style "Border2" {
+            GtkContainer::border-width = 2
+         }
+
          class "GtkScrolledWindow" style "NoSpace"
+
+         widget "*statusbox" style "Border2"
 
          widget "*cmdentry" style "WhiteOnBlack"
          widget "*statusbar" style "WhiteOnBlack"
-         widget "*status_left" style "WhiteOnBlack"
-         widget "*status_right" style "WhiteOnBlack"
+         widget "*statuslabel" style "WhiteOnBlack"
 
          widget "*cmdentry" style "Fixed8"
-         widget "*status_left" style "Fixed8"
-         widget "*status_right" style "Fixed8"
+         widget "*statuslabel" style "Fixed8"
       """);
 
       var cookiefile = Path.build_filename(Environment.get_user_config_dir(), "cookies.txt");

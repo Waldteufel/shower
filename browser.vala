@@ -18,10 +18,10 @@ class BrowserWindow : Gtk.Window {
    private WebKit.WebView web;
 
    private Gtk.Container statusbar;
-   private Gtk.Label status_left;
-   private Gtk.Label status_right;
+   private Gtk.Label statuslabel;
    private Gtk.Entry cmdentry;
    
+   private bool waiting_for_command = false;
    private string last_search = "";
 
    public BrowserWindow() {
@@ -35,60 +35,49 @@ class BrowserWindow : Gtk.Window {
 
       var statusbox = new Gtk.HBox(false, 0);
       statusbox.border_width = 2;
+      statusbox.name = "statusbox";
 
-      status_left = new Gtk.Label(null);
-      status_left.name = "status_left";
-      status_left.xalign = 0; // left aligned
-      status_left.ellipsize = Pango.EllipsizeMode.END;
-      status_left.selectable = true;
-      statusbox.pack_start(status_left, true, true, 0);
+      statuslabel = new Gtk.Label(null);
+      statuslabel.name = "statuslabel";
+      statuslabel.xalign = 0; // left aligned
+      statuslabel.ellipsize = Pango.EllipsizeMode.END;
+      statuslabel.selectable = true;
+      statusbox.pack_end(statuslabel);
 
-      status_right = new Gtk.Label(null);
-      status_right.name = "status_right";
-      statusbox.pack_end(status_right, false, false, 0);
- 
       statusbar = new Gtk.EventBox();
       statusbar.name = "statusbar";
       statusbar.add(statusbox);
-      vbox.pack_end(statusbar, false, false, 0);
+      vbox.pack_start(statusbar, false, false, 0);
 
       cmdentry = new Gtk.Entry();
       cmdentry.name = "cmdentry";
       cmdentry.has_frame = false;
-      vbox.pack_end(cmdentry, false, false, 0);
+      vbox.pack_start(cmdentry, false, false, 0);
 
       this.add(vbox);
       vbox.show_all();
-      cmdentry.hide();
+      statusbar.hide();
 
       web.notify["title"].connect(() => { this.title = web.title ?? web.uri ?? "shower"; });
-
-      web.hovering_over_link.connect(this.show_hover);
-      web.notify["uri"].connect(this.show_uri);
+      web.notify["uri"].connect(() => { if (!waiting_for_command) cmdentry.text = web.uri; });
+      web.notify["progress"].connect(() => { cmdentry.set_progress_fraction(web.progress); });
       
-      web.notify["progress"].connect(this.show_progress);
-      web.notify["load_status"].connect(this.reset_on_commit);
+      web.notify["uri"].connect(this.show_current_uri);
+      web.hovering_over_link.connect(this.show_hovered_link);
+
+      web.notify["load-status"].connect(this.load_status_changed);
 
       web.create_web_view.connect(this.spawn_view);
       web.close_web_view.connect(() => { this.destroy(); return true; });
       web.console_message.connect(this.handle_console_message);
+
       web.mime_type_policy_decision_requested.connect(this.handle_mime_type);
       web.download_requested.connect((p0) => { return this.handle_download(p0 as WebKit.Download); });
 
-      cmdentry.key_press_event.connect((press) => {
-         if (press.keyval == (0xff00 | '\r')) {
-            cmdentry.hide();
-            statusbar.show();
-            web.grab_focus();
-            this.handle_command(cmdentry.text);
-            return true;
-         } else if (press.keyval == 0xff1b) {
-            cmdentry.hide();
-            statusbar.show();
-            web.grab_focus();
-            return true;
-         }
-         return false;
+      cmdentry.activate.connect(() => {
+         cmdentry.select_region(0, 0);
+         web.grab_focus();
+         this.handle_command(cmdentry.text);
       });
 
       web.button_press_event.connect((press) => {
@@ -105,9 +94,18 @@ class BrowserWindow : Gtk.Window {
       this.key_press_event.connect(this.key_pressed);
    }
 
-   private void reset_on_commit() {
-      if (web.load_status == WebKit.LoadStatus.COMMITTED)
+   private void load_status_changed() {
+      if (web.load_status == WebKit.LoadStatus.COMMITTED) {
          last_search = "";
+         cmdentry.show();
+         statusbar.hide();
+      } else if (web.load_status == WebKit.LoadStatus.FINISHED) {
+         cmdentry.set_progress_fraction(0);
+         if (!waiting_for_command) {
+            cmdentry.hide();
+            statusbar.show();
+         }
+      }
    }
 
    private bool handle_download(WebKit.Download download) {
@@ -140,7 +138,9 @@ class BrowserWindow : Gtk.Window {
    }
 
    public void accept_command(string prompt, bool mark) {
+      waiting_for_command = true;
       cmdentry.text = prompt;
+      cmdentry.set_progress_fraction(0);
       cmdentry.show();
       statusbar.hide();
       cmdentry.grab_focus();
@@ -148,21 +148,27 @@ class BrowserWindow : Gtk.Window {
    }
 
    public void handle_command(string cmd) {
-      if (cmd == "") return;
+      if (cmd == "") {
+         waiting_for_command = false;
+         return;
+      }
 
       if (cmd[0] == '?') {
+         waiting_for_command = false;
          this.load_uri("http://www.google.de/search?q=%s".printf(cmd[1:cmd.length]));
       } else if (cmd[0] == '/') {
          last_search = cmd[1:cmd.length];
+         web.unmark_text_matches();
          if (last_search == "") {
             web.set_highlight_text_matches(false);
-            web.unmark_text_matches();
+            waiting_for_command = false;
          } else {
             web.mark_text_matches(last_search, false, 0);
             web.set_highlight_text_matches(true);
             web.search_text(last_search, false, true, true);
          }
       } else {         
+         waiting_for_command = false;
          this.load_uri(cmd);
       }
    }
@@ -217,18 +223,11 @@ class BrowserWindow : Gtk.Window {
       return false;
    }
 
-   private void show_progress() {
-      if (web.progress < 1)
-         status_right.label = "%2.0f%%".printf(web.progress * 100);
-      else
-         status_right.label = "";
-   }
-
-   private void show_hover(string? title, string? uri) {
+   private void show_hovered_link(string? title, string? uri) {
       if (uri == null) {
-         show_uri();
+         show_current_uri();
       } else {
-         status_left.set_markup(Markup.printf_escaped("<span color='cyan'>%s</span>", uri));
+         statuslabel.set_markup(Markup.printf_escaped("<span color='cyan'>%s</span>", uri));
       }
    }
 
@@ -238,7 +237,7 @@ class BrowserWindow : Gtk.Window {
       return (web.get_main_frame().get_data_source().get_request().get_message().flags & Soup.MessageFlags.CERTIFICATE_TRUSTED) != 0;
    }
 
-   private void show_uri() {
+   private void show_current_uri() {
       var uri = web.uri ?? "";
       var trust = is_trusted();
 
@@ -255,9 +254,9 @@ class BrowserWindow : Gtk.Window {
             underline = "error";
          }
 
-         status_left.set_markup(Markup.printf_escaped("<span color='%s' underline='%s'>%s</span>%s", color, underline, match.fetch(1), match.fetch(2)));
+         statuslabel.set_markup(Markup.printf_escaped("<span color='%s' underline='%s'>%s</span>%s", color, underline, match.fetch(1), match.fetch(2)));
       } else {
-         status_left.set_markup(Markup.escape_text(uri));
+         statuslabel.set_markup(Markup.escape_text(uri));
       }
    }
    
