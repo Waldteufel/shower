@@ -91,6 +91,16 @@ class BrowserWindow : Gtk.Window {
          this.handle_command(cmdentry.text);
       });
 
+      cmdentry.key_press_event.connect((press) => {
+         if (press.keyval == 0xff1b) { // GDK_KEY_Escape
+            cmdentry.hide();
+            statusbar.show();
+            web.grab_focus();
+            return true;
+         }
+         return false;
+      });
+
       web.button_press_event.connect((press) => {
          if (press.button == 1 && (press.state & Gdk.ModifierType.MODIFIER_MASK) == Gdk.ModifierType.CONTROL_MASK) {
             var linkuri = web.get_hit_test_result(press).link_uri; 
@@ -104,7 +114,6 @@ class BrowserWindow : Gtk.Window {
          return false;
       });
 
-      // this.events = this.events | Gdk.EventMask.KEY_PRESS_MASK;
       this.key_press_event.connect(this.key_pressed);
    }
 
@@ -156,7 +165,6 @@ class BrowserWindow : Gtk.Window {
    }
 
    public void accept_command(string prompt, bool mark) {
-      cmdentry.editable = true;
       cmdentry.text = prompt;
       cmdentry.set_progress_fraction(0);
       cmdentry.show();
@@ -175,13 +183,13 @@ class BrowserWindow : Gtk.Window {
          web.unmark_text_matches();
          if (last_search == "") {
             web.set_highlight_text_matches(false);
-            cmdentry.hide();
-            statusbar.show();
          } else {
             web.mark_text_matches(last_search, false, 0);
             web.set_highlight_text_matches(true);
             web.search_text(last_search, false, true, true);
          }
+         cmdentry.hide();
+         statusbar.show();
       } else {         
          this.load_uri(cmd);
       }
