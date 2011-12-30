@@ -25,16 +25,13 @@ class BrowserWindow : Gtk.Window {
 
    private void ask_for_url_once_when_loaded() {
       if (web.load_status == WebKit.LoadStatus.FINISHED) {
-         stdout.printf("%s\n", web.uri);
          accept_command("", true);
          web.notify["load-status"].disconnect(ask_for_url_once_when_loaded);
       }
    }
 
    public void load_empty() {
-      this.title = "shower";
-      this.statuslabel.label = "";
-      web.load_string("", "text/plain", "UTF-8", "");
+      web.load_string("<!DOCTYPE html><html><head><title>shower</title></head><body></body></html>", "text/html", "UTF-8", "");
       web.notify["load-status"].connect(ask_for_url_once_when_loaded);
    }
 
@@ -72,8 +69,8 @@ class BrowserWindow : Gtk.Window {
       this.add(vbox);
       vbox.show_all();
 
-      web.notify["title"].connect(() => { this.title = web.title ?? web.uri ?? "shower"; });
-      web.notify["uri"].connect(() => { if (is_loading()) cmdentry.text = web.uri ?? ""; });
+      web.notify["title"].connect(() => { this.title = web.title ?? web.uri; });
+      web.notify["uri"].connect(() => { if (is_loading()) cmdentry.text = web.uri; });
       web.notify["progress"].connect(() => { cmdentry.set_progress_fraction(web.progress); });
       
       web.notify["uri"].connect(this.show_current_uri);
@@ -194,7 +191,10 @@ class BrowserWindow : Gtk.Window {
       if (is_loading()) {
          if (press.keyval == 0xff1b) { // GDK_KEY_Escape
             web.stop_loading();
-            load_empty();
+            if (web.can_go_back())
+               web.go_back();
+            else
+               load_empty();
             return true;
          }
          return false;
@@ -264,12 +264,11 @@ class BrowserWindow : Gtk.Window {
    }
 
    private void show_current_uri() {
-      var uri = web.uri ?? "";
       var trust = is_trusted();
 
       if (trust != null) {
          MatchInfo match;
-         scheme_regex.match(uri, 0, out match);
+         scheme_regex.match(web.uri, 0, out match);
          
          string color, underline;
          if (trust) {
@@ -282,7 +281,7 @@ class BrowserWindow : Gtk.Window {
 
          statuslabel.set_markup(Markup.printf_escaped("<span color='%s' underline='%s'>%s</span>%s", color, underline, match.fetch(1), match.fetch(2)));
       } else {
-         statuslabel.set_markup(Markup.escape_text(uri));
+         statuslabel.set_markup(Markup.escape_text(web.uri));
       }
    }
    
