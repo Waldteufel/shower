@@ -16,7 +16,7 @@ class BrowserApplication : Application {
       var browser = new BrowserWindow();
       browser.show();
       if (cmd == " ")
-         browser.accept_command("", true);
+         browser.load_empty();
       else
          browser.handle_command(cmd);
    }

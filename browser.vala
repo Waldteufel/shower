@@ -21,8 +21,22 @@ class BrowserWindow : Gtk.Window {
    private Gtk.Label statuslabel;
    private Gtk.Entry cmdentry;
    
-   private bool waiting_for_command = false;
    private string last_search = "";
+
+   private void ask_for_url_once_when_loaded() {
+      if (web.load_status == WebKit.LoadStatus.FINISHED) {
+         stdout.printf("%s\n", web.uri);
+         accept_command("", true);
+         web.notify["load-status"].disconnect(ask_for_url_once_when_loaded);
+      }
+   }
+
+   public void load_empty() {
+      this.title = "shower";
+      this.statuslabel.label = "";
+      web.load_string("", "text/plain", "UTF-8", "");
+      web.notify["load-status"].connect(ask_for_url_once_when_loaded);
+   }
 
    public BrowserWindow() {
       this.set_default_size(640, 480);
@@ -52,14 +66,14 @@ class BrowserWindow : Gtk.Window {
       cmdentry = new Gtk.Entry();
       cmdentry.name = "cmdentry";
       cmdentry.has_frame = false;
+      cmdentry.editable = false;
       vbox.pack_start(cmdentry, false, false, 0);
 
       this.add(vbox);
       vbox.show_all();
-      statusbar.hide();
 
       web.notify["title"].connect(() => { this.title = web.title ?? web.uri ?? "shower"; });
-      web.notify["uri"].connect(() => { if (!waiting_for_command) cmdentry.text = web.uri; });
+      web.notify["uri"].connect(() => { if (is_loading()) cmdentry.text = web.uri ?? ""; });
       web.notify["progress"].connect(() => { cmdentry.set_progress_fraction(web.progress); });
       
       web.notify["uri"].connect(this.show_current_uri);
@@ -82,29 +96,36 @@ class BrowserWindow : Gtk.Window {
 
       web.button_press_event.connect((press) => {
          if (press.button == 1 && (press.state & Gdk.ModifierType.MODIFIER_MASK) == Gdk.ModifierType.CONTROL_MASK) {
-            var new_window = new BrowserWindow();
-            new_window.show();
-            new_window.load_uri(web.get_hit_test_result(press).link_uri);
-            return true;
+            var linkuri = web.get_hit_test_result(press).link_uri; 
+            if (linkuri != null) {
+               var new_window = new BrowserWindow();
+               new_window.show();
+               new_window.load_uri(linkuri);
+               return true;
+            }
          }
          return false;
       });
 
-      this.events = this.events | Gdk.EventMask.KEY_PRESS_MASK;
+      // this.events = this.events | Gdk.EventMask.KEY_PRESS_MASK;
       this.key_press_event.connect(this.key_pressed);
    }
 
+   private bool is_loading() {
+      return (web.load_status != WebKit.LoadStatus.FINISHED) && (web.load_status != WebKit.LoadStatus.FAILED);
+   }
+
    private void load_status_changed() {
-      if (web.load_status == WebKit.LoadStatus.COMMITTED) {
+      if (is_loading()) {
+         cmdentry.editable = false;
          last_search = "";
          cmdentry.show();
          statusbar.hide();
-      } else if (web.load_status == WebKit.LoadStatus.FINISHED) {
+      } else {
+         cmdentry.hide();
+         statusbar.show();
+         cmdentry.editable = true;
          cmdentry.set_progress_fraction(0);
-         if (!waiting_for_command) {
-            cmdentry.hide();
-            statusbar.show();
-         }
       }
    }
 
@@ -138,7 +159,7 @@ class BrowserWindow : Gtk.Window {
    }
 
    public void accept_command(string prompt, bool mark) {
-      waiting_for_command = true;
+      cmdentry.editable = true;
       cmdentry.text = prompt;
       cmdentry.set_progress_fraction(0);
       cmdentry.show();
@@ -148,32 +169,37 @@ class BrowserWindow : Gtk.Window {
    }
 
    public void handle_command(string cmd) {
-      if (cmd == "") {
-         waiting_for_command = false;
-         return;
-      }
+      if (cmd == "") return;
 
       if (cmd[0] == '?') {
-         waiting_for_command = false;
          this.load_uri("http://www.google.de/search?q=%s".printf(cmd[1:cmd.length]));
       } else if (cmd[0] == '/') {
          last_search = cmd[1:cmd.length];
          web.unmark_text_matches();
          if (last_search == "") {
             web.set_highlight_text_matches(false);
-            waiting_for_command = false;
+            cmdentry.hide();
+            statusbar.show();
          } else {
             web.mark_text_matches(last_search, false, 0);
             web.set_highlight_text_matches(true);
             web.search_text(last_search, false, true, true);
          }
       } else {         
-         waiting_for_command = false;
          this.load_uri(cmd);
       }
    }
 
    private bool key_pressed(Gdk.EventKey press) {
+      if (is_loading()) {
+         if (press.keyval == 0xff1b) { // GDK_KEY_Escape
+            web.stop_loading();
+            load_empty();
+            return true;
+         }
+         return false;
+      }
+
       switch (press.state & Gdk.ModifierType.MODIFIER_MASK) {
          case Gdk.ModifierType.CONTROL_MASK:
             switch (press.keyval) {
@@ -270,9 +296,7 @@ class BrowserWindow : Gtk.Window {
    }
 
    private string normalize_uri(string uri) {
-      if (uri == "")
-         return "about:blank";
-      else if (!scheme_regex.match(uri))
+      if (!scheme_regex.match(uri))
          return "http://" + uri;
       else return uri;
    }
