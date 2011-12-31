@@ -3,6 +3,8 @@ using GLib;
 class BrowserWindow : Gtk.Window {
    construct { unique_app.watch_window(this); }
 
+   private static string search_uri = "http://google.com/search?q=%s";
+
    private static Regex scheme_regex;
    private static Regex https_regex;
 
@@ -188,8 +190,10 @@ class BrowserWindow : Gtk.Window {
          }
          cmdentry.hide();
          statusbar.show();
-      } else if (cmd[0] == '?' || cmd.index_of_char(' ') >= 0) {
-         this.load_uri("http://www.google.de/search?q=%s".printf(cmd[1:cmd.length]));
+      } else if (cmd[0] == '?') {
+         this.load_uri(search_uri.printf(cmd[1:cmd.length]));
+      } else if (cmd.index_of_char(' ') >= 0) { // Heuristic
+         this.load_uri(search_uri.printf(cmd));
       } else {         
          this.load_uri(cmd);
       }
