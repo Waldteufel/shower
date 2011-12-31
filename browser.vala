@@ -105,12 +105,17 @@ class BrowserWindow : Gtk.Window {
       });
 
       web.button_press_event.connect((press) => {
-         if (press.button == 1 && (press.state & Gdk.ModifierType.MODIFIER_MASK) == Gdk.ModifierType.CONTROL_MASK) {
+         if (press.button == 1) {
             var linkuri = web.get_hit_test_result(press).link_uri; 
             if (linkuri != null && !linkuri.has_prefix("javascript:")) {
-               var new_window = new BrowserWindow();
-               new_window.show();
-               new_window.load_uri(linkuri);
+               BrowserWindow loadinwin;
+               if ((press.state & Gdk.ModifierType.MODIFIER_MASK) == Gdk.ModifierType.CONTROL_MASK) {
+                  loadinwin = new BrowserWindow();
+                  loadinwin.show();
+               } else {
+                  loadinwin = this;
+               }
+               loadinwin.load_uri(linkuri);
                return true;
             }
          }
@@ -204,7 +209,7 @@ class BrowserWindow : Gtk.Window {
       } else if (cmd.index_of_char(' ') >= 0) { // Heuristic
          this.search_for(cmd);
       } else {         
-         this.load_uri(cmd);
+         this.load_uri(normalize_uri(cmd));
       }
    }
 
@@ -326,7 +331,9 @@ class BrowserWindow : Gtk.Window {
    }
 
    public void load_uri(string uri) {
-      this.web.load_uri(normalize_uri(uri));
+      cmdentry.text = uri;
+      statuslabel.label = uri;
+      this.web.load_uri(uri);
    }
 
 }
