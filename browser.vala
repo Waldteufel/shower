@@ -86,6 +86,8 @@ class BrowserWindow : Gtk.Window {
       web.mime_type_policy_decision_requested.connect(this.handle_mime_type);
       web.download_requested.connect((p0) => { return this.handle_download(p0 as WebKit.Download); });
 
+      web.resource_request_starting.connect(this.filter_requests);
+
       cmdentry.activate.connect(() => {
          cmdentry.select_region(0, 0);
          web.grab_focus();
@@ -121,6 +123,14 @@ class BrowserWindow : Gtk.Window {
    private bool is_loading() {
       return (web.load_status != WebKit.LoadStatus.FINISHED) && (web.load_status != WebKit.LoadStatus.FAILED);
    }
+
+   private void filter_requests(WebKit.WebFrame frame, WebKit.WebResource resource, WebKit.NetworkRequest req, WebKit.NetworkResponse? resp) {
+      if (req.message == null) return;
+      var referer = req.message.request_headers.get_one("Referer");
+      if (referer == null) return;
+      if (!Soup.URI.host_equal(new Soup.URI(referer), req.message.uri))
+         req.message.request_headers.remove("Referer");
+   } 
 
    private void load_status_changed() {
       if (is_loading()) {
