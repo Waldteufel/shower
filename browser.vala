@@ -81,7 +81,6 @@ class BrowserWindow : Gtk.Window {
       web.notify["load-status"].connect(this.load_status_changed);
 
       web.create_web_view.connect(this.spawn_view);
-      web.close_web_view.connect(() => { this.destroy(); return true; });
       web.console_message.connect(this.handle_console_message);
 
       web.mime_type_policy_decision_requested.connect(this.handle_mime_type);
