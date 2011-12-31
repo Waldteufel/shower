@@ -104,7 +104,7 @@ class BrowserWindow : Gtk.Window {
       web.button_press_event.connect((press) => {
          if (press.button == 1 && (press.state & Gdk.ModifierType.MODIFIER_MASK) == Gdk.ModifierType.CONTROL_MASK) {
             var linkuri = web.get_hit_test_result(press).link_uri; 
-            if (linkuri != null) {
+            if (linkuri != null && !linkuri.has_prefix("javascript:")) {
                var new_window = new BrowserWindow();
                new_window.show();
                new_window.load_uri(linkuri);
@@ -176,9 +176,7 @@ class BrowserWindow : Gtk.Window {
    public void handle_command(string cmd) {
       if (cmd == "") return;
 
-      if (cmd[0] == '?') {
-         this.load_uri("http://www.google.de/search?q=%s".printf(cmd[1:cmd.length]));
-      } else if (cmd[0] == '/') {
+      if (cmd[0] == '/') {
          last_search = cmd[1:cmd.length];
          web.unmark_text_matches();
          if (last_search == "") {
@@ -190,6 +188,8 @@ class BrowserWindow : Gtk.Window {
          }
          cmdentry.hide();
          statusbar.show();
+      } else if (cmd[0] == '?' || cmd.index_of_char(' ') >= 0) {
+         this.load_uri("http://www.google.de/search?q=%s".printf(cmd[1:cmd.length]));
       } else {         
          this.load_uri(cmd);
       }
