@@ -79,6 +79,7 @@ class BrowserWindow : Gtk.Window {
       web.hovering_over_link.connect(this.show_hovered_link);
 
       web.notify["load-status"].connect(this.load_status_changed);
+      web.load_error.connect(this.handle_load_error);
 
       web.create_web_view.connect(this.spawn_view);
       web.console_message.connect(this.handle_console_message);
@@ -135,7 +136,16 @@ class BrowserWindow : Gtk.Window {
       if (referer == null) return;
       if (!Soup.URI.host_equal(new Soup.URI(referer), req.message.uri))
          req.message.request_headers.remove("Referer");
-   } 
+   }
+
+   private bool handle_load_error(WebKit.WebFrame frame, string uri, Error err) {
+      cmdentry.hide();
+      statusbar.show();
+      cmdentry.editable = true;
+      cmdentry.set_progress_fraction(0);
+
+      return false;
+   }
 
    private void load_status_changed() {
       if (is_loading()) {
@@ -217,10 +227,6 @@ class BrowserWindow : Gtk.Window {
       if (is_loading()) {
          if (press.keyval == 0xff1b) { // GDK_KEY_Escape
             web.stop_loading();
-            if (web.can_go_back())
-               web.go_back();
-            else
-               load_empty();
             return true;
          }
          return false;
