@@ -31,6 +31,12 @@ abstract class Application : Unique.App {
    public int run(string[] args) {
       var cmd = args.length > 1 ? args[1] : " ";
 
+      if (FileUtils.test(cmd, FileTest.EXISTS)) {
+         if (!Path.is_absolute(cmd))
+            cmd = Path.build_filename(Environment.get_current_dir(), cmd);
+         cmd = "file://" + Uri.escape_string(cmd, "/", true);
+      }
+
       if (!unique_app.is_running) {
          this.handle_cmd(cmd);
          Gtk.main();
