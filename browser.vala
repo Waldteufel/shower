@@ -29,7 +29,19 @@ class BrowserWindow : Gtk.Window {
       protected abstract void enter();
       construct { this.enter(); }
 
-      public abstract bool key_pressed(Gdk.ModifierType modif, uint key);
+      public virtual bool key_pressed(Gdk.ModifierType modif, uint key) {
+         if (modif == Gdk.ModifierType.MOD1_MASK) {
+            switch (key) {
+               case 0xff51: // GDK_KEY_Left
+                  browser.web.go_back();
+                  return true;
+               case 0xff53: // GDK_KEY_Right
+                  browser.web.go_forward();
+                  return true;
+            }
+         }
+         return false;
+      }
    }
 
    abstract class NonLoadMode : Mode {
@@ -52,16 +64,6 @@ class BrowserWindow : Gtk.Window {
                      return true;
                }
                break;
-            case Gdk.ModifierType.MOD1_MASK:
-               switch (key) {
-                  case 0xff51: // GDK_KEY_Left
-                     browser.web.go_back();
-                     return true;
-                  case 0xff53: // GDK_KEY_Right
-                     browser.web.go_forward();
-                     return true;
-               }
-               break;
             case 0:
                if (key == 0xff1b) { // GDK_KEY_Escape
                   browser.mode = new InteractMode(browser);
@@ -69,7 +71,7 @@ class BrowserWindow : Gtk.Window {
                }
                break;
          }
-         return false;
+         return base.key_pressed(modif, key);
       }
    }
 
@@ -140,7 +142,7 @@ class BrowserWindow : Gtk.Window {
             browser.web.stop_loading();
             return true;
          }
-         return false;
+         return base.key_pressed(modif, key);
       }
    }
 
