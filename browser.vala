@@ -26,13 +26,10 @@ class BrowserWindow : Gtk.Window {
    abstract class Mode : Object {
       public BrowserWindow browser { get; construct; }
 
-      public virtual bool key_pressed(Gdk.ModifierType modif, uint key) {
-         if (modif == 0 && key == 0xff1b) { // GDK_KEY_Escape
-            browser.mode = new InteractMode(browser);
-            return true;
-         }
-         return false;
-      }
+      protected abstract void enter();
+      construct { this.enter(); }
+
+      public abstract bool key_pressed(Gdk.ModifierType modif, uint key);
 
       public virtual bool clicked(Gdk.ModifierType modif, uint button, WebKit.HitTestResult target) {
          if (modif == Gdk.ModifierType.CONTROL_MASK && button == 1) {
@@ -48,19 +45,7 @@ class BrowserWindow : Gtk.Window {
       }
    }
 
-   class InteractMode : Mode {
-      public InteractMode(BrowserWindow browser) {
-         Object(browser: browser);
-      }
-
-      construct {
-         browser.web.grab_focus();
-         browser.cmdentry.hide();
-         browser.statusbar.show();
-         browser.web.unmark_text_matches();
-         browser.web.set_highlight_text_matches(false);
-      }
-
+   abstract class NonLoadMode : Mode {
       public override bool key_pressed(Gdk.ModifierType modif, uint key) {
          switch (modif) {
             case Gdk.ModifierType.CONTROL_MASK:
@@ -90,10 +75,29 @@ class BrowserWindow : Gtk.Window {
                      return true;
                }
                break;
+            case 0:
+               if (key == 0xff1b) { // GDK_KEY_Escape
+                  browser.mode = new InteractMode(browser);
+                  return true;
+               }
+               break;
          }
-         return base.key_pressed(modif, key);
+         return false;
+      }
+   }
+
+   class InteractMode : NonLoadMode {
+      public InteractMode(BrowserWindow browser) {
+         Object(browser: browser);
       }
 
+      protected override void enter() {
+         browser.web.grab_focus();
+         browser.cmdentry.hide();
+         browser.statusbar.show();
+         browser.web.unmark_text_matches();
+         browser.web.set_highlight_text_matches(false);
+      }
    }
 
    class FindMode : InteractMode {
@@ -103,7 +107,8 @@ class BrowserWindow : Gtk.Window {
          Object(browser: browser, search: search);
       }
 
-      construct { 
+      protected override void enter() {
+         base.enter();
          browser.web.mark_text_matches(search, false, 0);
          browser.web.set_highlight_text_matches(true);
          browser.web.search_text(search, false, true, true);
@@ -137,7 +142,7 @@ class BrowserWindow : Gtk.Window {
          Object(browser: browser);
       }
 
-      construct {
+      protected override void enter() {
          browser.cmdentry.editable = false;
          browser.statusbar.hide();
          browser.cmdentry.show();   
@@ -152,12 +157,12 @@ class BrowserWindow : Gtk.Window {
       }
    }
 
-   class CommandMode : Mode {
+   class CommandMode : NonLoadMode {
       public CommandMode(BrowserWindow browser) {
          Object(browser: browser);
       }
 
-      construct {
+      protected override void enter() {
          browser.cmdentry.editable = true;
          browser.cmdentry.set_progress_fraction(0);
          browser.cmdentry.text = "";
