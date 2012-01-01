@@ -140,7 +140,7 @@ class BrowserWindow : Gtk.Window {
             browser.web.stop_loading();
             return true;
          }
-         return base.key_pressed(modif, key);
+         return false;
       }
    }
 
