@@ -35,17 +35,12 @@ class BrowserWindow : Gtk.Window {
       }
 
       public virtual bool clicked(Gdk.ModifierType modif, uint button, WebKit.HitTestResult target) {
-         if (button == 1) {
+         if (modif == Gdk.ModifierType.CONTROL_MASK && button == 1) {
             var linkuri = target.link_uri;
             if (linkuri != null && !linkuri.has_prefix("javascript:")) {
-               BrowserWindow loadinwin;
-               if (modif == Gdk.ModifierType.CONTROL_MASK) {
-                  loadinwin = new BrowserWindow();
-                  loadinwin.show();
-               } else {
-                  loadinwin = browser;
-               }
-               loadinwin.load_uri(linkuri);
+               var win = new BrowserWindow();
+               win.show();
+               win.load_uri(linkuri);
                return true;
             }
          }
