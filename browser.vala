@@ -22,13 +22,174 @@ class BrowserWindow : Gtk.Window {
    private Gtk.Container statusbar;
    private Gtk.Label statuslabel;
    private Gtk.Entry cmdentry;
-   
-   private string last_search = "";
+
+   abstract class Mode : Object {
+      public BrowserWindow browser { get; construct; }
+
+      public virtual bool key_pressed(Gdk.ModifierType modif, uint key) {
+         if (modif == 0 && key == 0xff1b) { // GDK_KEY_Escape
+            browser.mode = new InteractMode(browser);
+            return true;
+         }
+         return false;
+      }
+
+      public virtual bool clicked(Gdk.ModifierType modif, uint button, WebKit.HitTestResult target) {
+         if (button == 1) {
+            var linkuri = target.link_uri;
+            if (linkuri != null && !linkuri.has_prefix("javascript:")) {
+               BrowserWindow loadinwin;
+               if (modif == Gdk.ModifierType.CONTROL_MASK) {
+                  loadinwin = new BrowserWindow();
+                  loadinwin.show();
+               } else {
+                  loadinwin = browser;
+               }
+               loadinwin.load_uri(linkuri);
+               return true;
+            }
+         }
+         return false;
+      }
+   }
+
+   class InteractMode : Mode {
+      public InteractMode(BrowserWindow browser) {
+         Object(browser: browser);
+      }
+
+      construct {
+         browser.web.grab_focus();
+         browser.cmdentry.hide();
+         browser.statusbar.show();
+         browser.web.unmark_text_matches();
+         browser.web.set_highlight_text_matches(false);
+      }
+
+      public override bool key_pressed(Gdk.ModifierType modif, uint key) {
+         switch (modif) {
+            case Gdk.ModifierType.CONTROL_MASK:
+               switch (key) {
+                  case 'l':
+                     browser.mode = new CommandMode.start_with(browser, browser.web.uri ?? "");
+                     return true;
+                  case 'k':
+                     browser.mode = new CommandMode.prompt(browser, "?");
+                     return true;
+                  case 'f':
+                     browser.mode = new CommandMode.prompt(browser, "/");
+                     return true;
+                  case 'u':
+                     browser.web.set_view_source_mode(!browser.web.get_view_source_mode());
+                     browser.web.reload();
+                     return true;
+               }
+               break;
+            case Gdk.ModifierType.MOD1_MASK:
+               switch (key) {
+                  case 0xff51: // GDK_KEY_Left
+                     browser.web.go_back();
+                     return true;
+                  case 0xff53: // GDK_KEY_Right
+                     browser.web.go_forward();
+                     return true;
+               }
+               break;
+         }
+         return base.key_pressed(modif, key);
+      }
+
+   }
+
+   class FindMode : InteractMode {
+      public string search { get; construct; }
+
+      public FindMode(BrowserWindow browser, string search) {
+         Object(browser: browser, search: search);
+      }
+
+      construct { 
+         browser.web.mark_text_matches(search, false, 0);
+         browser.web.set_highlight_text_matches(true);
+         browser.web.search_text(search, false, true, true);
+      }
+
+      public override bool key_pressed(Gdk.ModifierType modif, uint key) {
+         switch (modif) {
+            case Gdk.ModifierType.SHIFT_MASK:
+               switch (key) {
+                  case 0xffc0: // GDK_KEY_F3
+                     if (search != "")
+                        browser.web.search_text(search, false, false, true);
+                     return true;
+               }
+               break;
+            case 0:
+               switch (key) {
+                  case 0xffc0: // GDK_KEY_F3
+                     if (search != "")
+                        browser.web.search_text(search, false, true, true);
+                     return true;
+               }
+               break;
+         }
+         return base.key_pressed(modif, key);
+      }
+   }
+
+   class LoadMode : Mode {
+      public LoadMode(BrowserWindow browser) {
+         Object(browser: browser);
+      }
+
+      construct {
+         browser.cmdentry.editable = false;
+         browser.statusbar.hide();
+         browser.cmdentry.show();   
+      }
+
+      public override bool key_pressed(Gdk.ModifierType modif, uint key) {
+         if (modif == 0 && key == 0xff1b) {
+            browser.web.stop_loading();
+            return true;
+         }
+         return base.key_pressed(modif, key);
+      }
+   }
+
+   class CommandMode : Mode {
+      public CommandMode(BrowserWindow browser) {
+         Object(browser: browser);
+      }
+
+      construct {
+         browser.cmdentry.editable = true;
+         browser.cmdentry.set_progress_fraction(0);
+         browser.cmdentry.text = "";
+         browser.statusbar.hide();
+         browser.cmdentry.show();
+         browser.cmdentry.grab_focus(); 
+      }
+
+      public CommandMode.start_with(BrowserWindow browser, string init) {
+         Object(browser: browser);
+         browser.cmdentry.text = init;
+         browser.cmdentry.select_region(0, -1);
+      }
+
+      public CommandMode.prompt(BrowserWindow browser, string prompt) {
+         Object(browser: browser);
+         browser.cmdentry.text = prompt;
+         browser.cmdentry.set_position(-1);
+      }
+   }
+
+   private Mode mode;
 
    private void ask_for_url_once_when_loaded() {
       if (web.load_status == WebKit.LoadStatus.FINISHED) {
-         accept_command("", true);
-         web.notify["load-status"].disconnect(ask_for_url_once_when_loaded);
+         this.mode = new CommandMode(this);
+         web.notify["load-status"].disconnect(this.ask_for_url_once_when_loaded);
       }
    }
 
@@ -72,14 +233,15 @@ class BrowserWindow : Gtk.Window {
       vbox.show_all();
 
       web.notify["title"].connect(() => { this.title = web.title ?? web.uri; });
+      web.notify["uri"].connect(() => { this.title = web.title ?? web.uri; });
+
       web.notify["uri"].connect(() => { if (is_loading()) cmdentry.text = web.uri; });
       web.notify["progress"].connect(() => { cmdentry.set_progress_fraction(web.progress); });
-      
+
       web.notify["uri"].connect(this.show_current_uri);
       web.hovering_over_link.connect(this.show_hovered_link);
 
       web.notify["load-status"].connect(this.load_status_changed);
-      web.load_error.connect(this.handle_load_error);
 
       web.create_web_view.connect(this.spawn_view);
       web.console_message.connect(this.handle_console_message);
@@ -95,35 +257,15 @@ class BrowserWindow : Gtk.Window {
          this.handle_command(cmdentry.text);
       });
 
-      cmdentry.key_press_event.connect((press) => {
-         if (press.keyval == 0xff1b) { // GDK_KEY_Escape
-            cmdentry.hide();
-            statusbar.show();
-            web.grab_focus();
-            return true;
-         }
-         return false;
-      });
-
       web.button_press_event.connect((press) => {
-         if (press.button == 1) {
-            var linkuri = web.get_hit_test_result(press).link_uri; 
-            if (linkuri != null && !linkuri.has_prefix("javascript:")) {
-               BrowserWindow loadinwin;
-               if ((press.state & Gdk.ModifierType.MODIFIER_MASK) == Gdk.ModifierType.CONTROL_MASK) {
-                  loadinwin = new BrowserWindow();
-                  loadinwin.show();
-               } else {
-                  loadinwin = this;
-               }
-               loadinwin.load_uri(linkuri);
-               return true;
-            }
-         }
-         return false;
+         return this.mode.clicked(press.state & Gdk.ModifierType.MODIFIER_MASK, press.button, web.get_hit_test_result(press));
       });
 
-      this.key_press_event.connect(this.key_pressed);
+      this.key_press_event.connect((press) => {
+         return this.mode.key_pressed(press.state & Gdk.ModifierType.MODIFIER_MASK, press.keyval);
+      });
+
+      this.mode = new InteractMode(this);
    }
 
    private bool is_loading() {
@@ -138,33 +280,17 @@ class BrowserWindow : Gtk.Window {
          req.message.request_headers.remove("Referer");
    }
 
-   private bool handle_load_error(WebKit.WebFrame frame, string uri, Error err) {
-      cmdentry.hide();
-      statusbar.show();
-      cmdentry.editable = true;
-      cmdentry.set_progress_fraction(0);
-
-      return false;
-   }
-
    private void load_status_changed() {
-      if (is_loading()) {
-         cmdentry.editable = false;
-         last_search = "";
-         cmdentry.show();
-         statusbar.hide();
-      } else {
-         cmdentry.hide();
-         statusbar.show();
-         cmdentry.editable = true;
-         cmdentry.set_progress_fraction(0);
-      }
+      if (web.load_status == WebKit.LoadStatus.PROVISIONAL)
+         mode = new LoadMode(this);
+      else if (!is_loading())
+         mode = new InteractMode(this);
    }
 
    private bool handle_download(WebKit.Download download) {
       var chooser = new Gtk.FileChooserDialog(null, this, Gtk.FileChooserAction.SAVE,
-         Gtk.Stock.CANCEL, Gtk.ResponseType.CANCEL,
-         Gtk.Stock.SAVE, Gtk.ResponseType.ACCEPT);
+            Gtk.Stock.CANCEL, Gtk.ResponseType.CANCEL,
+            Gtk.Stock.SAVE, Gtk.ResponseType.ACCEPT);
       chooser.do_overwrite_confirmation = true;
       chooser.set_current_folder("/tmp");
       chooser.set_current_name(download.suggested_filename);
@@ -190,30 +316,11 @@ class BrowserWindow : Gtk.Window {
       return false;
    }
 
-   public void accept_command(string prompt, bool mark) {
-      cmdentry.text = prompt;
-      cmdentry.set_progress_fraction(0);
-      cmdentry.show();
-      statusbar.hide();
-      cmdentry.grab_focus();
-      if (!mark) cmdentry.set_position(-1);
-   }
-
    public void handle_command(string cmd) {
       if (cmd == "") return;
 
       if (cmd[0] == '/') {
-         last_search = cmd[1:cmd.length];
-         web.unmark_text_matches();
-         if (last_search == "") {
-            web.set_highlight_text_matches(false);
-         } else {
-            web.mark_text_matches(last_search, false, 0);
-            web.set_highlight_text_matches(true);
-            web.search_text(last_search, false, true, true);
-         }
-         cmdentry.hide();
-         statusbar.show();
+         this.mode = new FindMode(this, cmd[1:cmd.length]);
       } else if (cmd[0] == '?') {
          this.search_for(cmd[1:cmd.length]);
       } else if (cmd.index_of_char(' ') >= 0) { // Heuristic
@@ -221,64 +328,6 @@ class BrowserWindow : Gtk.Window {
       } else {         
          this.load_uri(normalize_uri(cmd));
       }
-   }
-
-   private bool key_pressed(Gdk.EventKey press) {
-      if (is_loading()) {
-         if (press.keyval == 0xff1b) { // GDK_KEY_Escape
-            web.stop_loading();
-            return true;
-         }
-         return false;
-      }
-
-      switch (press.state & Gdk.ModifierType.MODIFIER_MASK) {
-         case Gdk.ModifierType.CONTROL_MASK:
-            switch (press.keyval) {
-               case 'l':
-                  accept_command(web.uri ?? "", true);
-                  return true;
-               case 'k':
-                  accept_command("?", false);
-                  return true;
-               case 'f':
-                  accept_command("/", false);
-                  return true;
-               case 'u':
-                  web.set_view_source_mode(!web.get_view_source_mode());
-                  web.reload();
-                  return true;
-            }
-            break;
-         case Gdk.ModifierType.MOD1_MASK:
-            switch (press.keyval) {
-               case 0xff51: // GDK_KEY_Left
-                  web.go_back();
-                  return true;
-               case 0xff53: // GDK_KEY_Right
-                  web.go_forward();
-                  return true;
-            }
-            break;
-         case Gdk.ModifierType.SHIFT_MASK:
-            switch (press.keyval) {
-               case 0xffc0: // GDK_KEY_F3
-                  if (last_search != "")
-                     web.search_text(last_search, false, false, true);
-                  return true;
-            }
-            break;
-         case 0:
-            switch (press.keyval) {
-               case 0xffc0: // GDK_KEY_F3
-                  if (last_search != "")
-                     web.search_text(last_search, false, true, true);
-                  return true;
-            }
-            break;
-      }
-       
-      return false;
    }
 
    private void show_hovered_link(string? title, string? uri) {
@@ -301,7 +350,7 @@ class BrowserWindow : Gtk.Window {
       if (trust != null) {
          MatchInfo match;
          scheme_regex.match(web.uri, 0, out match);
-         
+
          string color, underline;
          if (trust) {
             color = "green";
@@ -316,7 +365,7 @@ class BrowserWindow : Gtk.Window {
          statuslabel.set_markup(Markup.escape_text(web.uri));
       }
    }
-   
+
    private WebKit.WebView spawn_view() {   
       var win = new BrowserWindow();
       win.web.web_view_ready.connect(() => {
