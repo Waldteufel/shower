@@ -30,19 +30,6 @@ class BrowserWindow : Gtk.Window {
       construct { this.enter(); }
 
       public abstract bool key_pressed(Gdk.ModifierType modif, uint key);
-
-      public virtual bool clicked(Gdk.ModifierType modif, uint button, WebKit.HitTestResult target) {
-         if (modif == Gdk.ModifierType.CONTROL_MASK && button == 1) {
-            var linkuri = target.link_uri;
-            if (linkuri != null && !linkuri.has_prefix("javascript:")) {
-               var win = new BrowserWindow();
-               win.show();
-               win.load_uri(linkuri);
-               return true;
-            }
-         }
-         return false;
-      }
    }
 
    abstract class NonLoadMode : Mode {
@@ -257,15 +244,27 @@ class BrowserWindow : Gtk.Window {
          this.handle_command(cmdentry.text);
       });
 
-      web.button_press_event.connect((press) => {
-         return this.mode.clicked(press.state & Gdk.ModifierType.MODIFIER_MASK, press.button, web.get_hit_test_result(press));
-      });
+      web.button_press_event.connect(this.handle_click);
 
       this.key_press_event.connect((press) => {
          return this.mode.key_pressed(press.state & Gdk.ModifierType.MODIFIER_MASK, press.keyval);
       });
 
       this.mode = new InteractMode(this);
+   }
+
+   private bool handle_click(Gdk.EventButton press) {
+      var modif = press.state & Gdk.ModifierType.MODIFIER_MASK;
+      if (modif == Gdk.ModifierType.CONTROL_MASK && press.button == 1) {
+         var linkuri = web.get_hit_test_result(press).link_uri;
+         if (linkuri != null && !linkuri.has_prefix("javascript:")) {
+            var win = new BrowserWindow();
+            win.show();
+            win.load_uri(linkuri);
+            return true;
+         }
+      }
+      return false;
    }
 
    private bool is_loading() {
