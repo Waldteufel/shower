@@ -181,8 +181,16 @@ class BrowserWindow : Gtk.Window {
 
    private Mode mode;
 
+   private void ask_for_url_once_when_loaded() {
+      if (web.load_status == WebKit.LoadStatus.FINISHED) {
+         this.mode = new CommandMode(this);
+         web.notify["load-status"].disconnect(this.ask_for_url_once_when_loaded);
+      }
+   }
+
    public void load_empty() {
       web.load_string("<!DOCTYPE html><html><head><title>shower</title></head><body></body></html>", "text/html", "UTF-8", "");
+      web.notify["load-status"].connect(ask_for_url_once_when_loaded);
    }
 
    public BrowserWindow() {
