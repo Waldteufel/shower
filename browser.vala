@@ -333,7 +333,7 @@ class BrowserWindow : Gtk.Window {
       if (uri == null) {
          show_current_uri();
       } else {
-         statuslabel.set_markup(Markup.printf_escaped("<span color='cyan'>%s</span>", uri));
+         statuslabel.label = Markup.printf_escaped("<span color='cyan'>%s</span>", uri);
       }
    }
 
@@ -359,9 +359,9 @@ class BrowserWindow : Gtk.Window {
             underline = "error";
          }
 
-         statuslabel.set_markup(Markup.printf_escaped("<span color='%s' underline='%s'>%s</span>%s", color, underline, match.fetch(1), match.fetch(2)));
+         statuslabel.label = Markup.printf_escaped("<span color='%s' underline='%s'>%s</span>%s", color, underline, match.fetch(1), match.fetch(2));
       } else {
-         statuslabel.set_markup(Markup.escape_text(web.uri));
+         statuslabel.label = Markup.escape_text(web.uri);
       }
    }
 
@@ -386,7 +386,7 @@ class BrowserWindow : Gtk.Window {
 
    public void load_uri(string uri) {
       cmdentry.text = uri;
-      statuslabel.label = uri;
+      statuslabel.label = Markup.escape_text(uri);
       this.web.load_uri(uri);
    }
 
