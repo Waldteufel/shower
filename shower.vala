@@ -54,7 +54,7 @@ class BrowserApplication : Application {
          widget "*statuslabel" style "Fixed8"
       """);
 
-      var cookiefile = Path.build_filename(Environment.get_user_config_dir(), "cookies.txt");
+      var cookiefile = Path.build_filename(Environment.get_user_config_dir(), "shower", "cookies.txt");
       var cookiejar = new Soup.CookieJarText(cookiefile, true);
       cookiejar.accept_policy = Soup.CookieJarAcceptPolicy.NO_THIRD_PARTY;
       WebKit.get_default_session().add_feature = cookiejar;
