@@ -204,6 +204,13 @@ class BrowserWindow : Gtk.Window {
 
       var vbox = new Gtk.VBox(false, 0);
       web = new WebKit.WebView();
+
+      var st = web.get_settings();
+      st.enable_dns_prefetching = false;
+      st.enable_html5_local_storage = false;
+      st.enable_html5_database = false;
+      st.enable_offline_web_application_cache = false;
+
       var scr = new Gtk.ScrolledWindow(null, null);
       scr.add(web);
       vbox.pack_start(scr, true, true, 0);
