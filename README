@@ -4,6 +4,7 @@ best served with a tiling Window Manager like i3.
 Mod1+Left       Back
 Mod1+Right      Forward
 
+Ctrl+W          Close Window
 Ctrl+L          Location Bar
 Ctrl+K          Google Search
 Ctrl+U          Toggle Source

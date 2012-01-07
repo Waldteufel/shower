@@ -30,15 +30,24 @@ class BrowserWindow : Gtk.Window {
       construct { this.enter(); }
 
       public virtual bool key_pressed(Gdk.ModifierType modif, uint key) {
-         if (modif == Gdk.ModifierType.MOD1_MASK) {
-            switch (key) {
-               case 0xff51: // GDK_KEY_Left
-                  browser.web.go_back();
-                  return true;
-               case 0xff53: // GDK_KEY_Right
-                  browser.web.go_forward();
-                  return true;
-            }
+         switch (modif) {
+            case Gdk.ModifierType.CONTROL_MASK:
+               switch (key) {
+                  case 'w':
+                     browser.destroy();
+                     return true;
+               }
+               break;
+            case Gdk.ModifierType.MOD1_MASK:
+               switch (key) {
+                  case 0xff51: // GDK_KEY_Left
+                     browser.web.go_back();
+                     return true;
+                  case 0xff53: // GDK_KEY_Right
+                     browser.web.go_forward();
+                     return true;
+               }
+               break;
          }
          return false;
       }
