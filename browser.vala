@@ -210,6 +210,7 @@ class BrowserWindow : Gtk.Window {
       st.enable_html5_local_storage = false;
       st.enable_html5_database = false;
       st.enable_offline_web_application_cache = false;
+      st.user_stylesheet_uri = "file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "style.css");
 
       var scr = new Gtk.ScrolledWindow(null, null);
       scr.add(web);
