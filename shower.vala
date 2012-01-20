@@ -8,6 +8,8 @@ using GLib;
 
 class BrowserApplication : Application {
 
+   public string search_uri;
+
    public BrowserApplication() {
       base("eu.waldteufel.shower");
    }
@@ -59,11 +61,17 @@ class BrowserApplication : Application {
       cookiejar.accept_policy = Soup.CookieJarAcceptPolicy.NO_THIRD_PARTY;
       WebKit.get_default_session().add_feature(cookiejar);
       WebKit.set_default_web_database_quota(0);
+
+      try {
+         FileUtils.get_contents(Path.build_filename(Environment.get_user_config_dir(), "shower", "search"), out this.search_uri);
+      } catch (FileError err) {
+         this.search_uri = "http://google.com/?q=%s";
+      }
    }
 
 }
 
-Application unique_app;
+BrowserApplication unique_app;
 
 int main(string[] args) {
    Gtk.init(ref args);
