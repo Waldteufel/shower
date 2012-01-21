@@ -62,6 +62,9 @@ class BrowserWindow : Gtk.Window {
                   case 'l':
                      browser.mode = new CommandMode.start_with(browser, browser.web.uri ?? "");
                      return true;
+                  case 'r':
+                     browser.web.reload();
+                     return true;
                   case 'k':
                      browser.mode = new CommandMode.prompt(browser, "?");
                      return true;
