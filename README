@@ -6,7 +6,9 @@ Mod1+Right      Forward
 
 Ctrl+W          Close Window
 Ctrl+L          Location Bar
-Ctrl+K          Google Search
+Ctrl+#          Go to Anchor
+Ctrl+K          Web Search (Anchor "?")
+Ctrl+0          Open Dashboard
 Ctrl+U          Toggle Source
 Ctrl+R          Reload
 
@@ -15,6 +17,19 @@ F3              Find Next
 Shift+F3        Find Previous
 
 Escape          Close Command Bar / Cancel Load
+
+
+Anchors unify Search Engines and Bookmarks and can
+be defined under ~/.config/shower/anchors as
+
+   [Anchors]
+   ?=http://duckduckgo.com/?kl=de-de&q=%s
+   en=http://dict.leo.org/ende?lp=ende&search=%s
+
+
+The dashboard is just a HTML file placed under
+~/.config/shower/dashboard.html - an example is
+provided.
 
 
 Dependencies:

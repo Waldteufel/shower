@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="de">
+   <head>
+      <title>Dashboard</title>
+      <style>
+         html { width: 100%; height: 100%; display: table }
+         body { width: 100%; height: 100%; display: table-cell;
+               vertical-align: middle; text-align: center;
+                  border: 0px; }
+
+         body { background-color: black; color: white }
+         body > div { margin: 1em }
+         section { border: 1px solid #444; -webkit-border-radius: 5px; padding: .5em; display: inline-block }
+         section > div { margin-top: .5em }
+         h1 { margin: 0em; font-size: 110%; color: #888 }
+         a {
+            -webkit-transition: -webkit-box-shadow 0.1s ease-in-out;
+            -webkit-border-radius: 5px;
+            display: inline-block; padding: .5em;
+            background-color: #111; font-weight: bold; text-decoration: none;
+            color: white;
+         }
+         a:hover, a:focus { -webkit-box-shadow:0 0 5px #7f7f7f; }
+         a > kbd { display:inline-block; background-color: #411; padding: .2em; margin-right: .5em; }
+      </style>
+      <script type="text/javascript">
+         var keys = new Array("1234567890", "QWERTZUIOP");
+
+         function keydown(ev) {
+            var key = String.fromCharCode(ev.keyCode);
+            var idx = -1;
+            for (var i = 0; i < keys.length; ++i) {
+               idx = keys[i].indexOf(key);
+               if (idx > -1) {
+                  window.location = document.getElementsByTagName("section")[i].getElementsByTagName("a")[idx].href;
+                  return;
+               }
+            }
+         }
+
+         function enumerateLinks() {
+            var sections = document.getElementsByTagName("section");
+            var links;
+            var newelem;
+
+            for (var i = 0; i < sections.length; ++i) {
+               links = sections[i].getElementsByTagName("a");
+               for (var idx = 0; idx < links.length; ++idx) {
+                  newelem = document.createElement("kbd");
+                  newelem.innerHTML = keys[i][idx];
+                  links[idx].insertBefore(newelem, links[idx].firstChild);
+               }
+            }
+         }
+      </script>
+   </head>
+   <body onkeydown="keydown(event)" onload="enumerateLinks()">
+      <div>
+         <section>
+         <h1>News</h1>
+         <div>
+            <a href="http://heise.de/">Heise</a>
+            <a href="http://golem.de/">Golem</a>
+         </div>
+         </section>
+      </div>
+      <div>
+         <section>
+         <h1>Communities</h1>
+         <div>
+            <a href="http://reddit.com/">Reddit</a>
+            <a href="http://wallbase.cc/">Wallbase</a>
+         </div>
+         </section>
+      </div>
+   </body>
+</html>
