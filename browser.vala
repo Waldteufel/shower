@@ -286,6 +286,11 @@ class BrowserWindow : Gtk.Window {
          this.handle_command(cmdentry.text);
       });
 
+      statusbar.enter_notify_event.connect(() => {
+         this.show_current_uri();
+         return true;
+      });
+
       web.button_press_event.connect(this.handle_click);
 
       this.key_press_event.connect((press) => {
