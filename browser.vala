@@ -63,7 +63,7 @@ class BrowserWindow : Gtk.Window {
          switch (modif) {
             case Gdk.ModifierType.CONTROL_MASK:
                switch (key) {
-                  case '0':
+                  case 0xff67: // GDK_KEY_Menu
                      browser.load_uri("file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "dashboard.html"));
                      return true;
                   case 'l':
