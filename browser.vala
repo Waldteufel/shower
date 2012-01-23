@@ -370,6 +370,15 @@ class BrowserWindow : Gtk.Window {
       return false;
    }
 
+   public void follow_anchor(string name, string arg) {
+      try {
+         string subst = anchors.get_string("Anchors", name);
+         this.load_uri(subst.printf(Uri.escape_string(arg, "", true)));
+      } catch (KeyFileError err) {
+         this.load_uri(arg);
+      }
+   }
+
    public void handle_command(string cmd) {
       if (cmd == "") return;
 
@@ -378,13 +387,9 @@ class BrowserWindow : Gtk.Window {
       } else if (cmd[0] == '#') {
          MatchInfo match;
          anchor_regex.match(cmd, 0, out match);
-
-         try {
-            string subst = anchors.get_string("Anchors", match.fetch(1));
-            this.load_uri(subst.printf(Uri.escape_string(match.fetch(2), "", true)));
-         } catch (KeyFileError err) {
-            this.load_uri(cmd);
-         }
+         follow_anchor(match.fetch(1), match.fetch(2));
+      } else if (cmd.contains(" ")) {
+         follow_anchor("?", cmd);
       } else {         
          this.load_uri(normalize_uri(cmd));
       }
