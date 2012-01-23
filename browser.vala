@@ -26,7 +26,7 @@ class BrowserWindow : Gtk.Window {
    private Gtk.Label statuslabel;
    private Gtk.Entry cmdentry;
 
-   public KeyFile anchors;
+   private KeyFile anchors;
 
    abstract class Mode : Object {
       public BrowserWindow browser { get; construct; }
