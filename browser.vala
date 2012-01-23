@@ -67,7 +67,10 @@ class BrowserWindow : Gtk.Window {
                      browser.load_uri("file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "dashboard.html"));
                      return true;
                   case 'l':
-                     browser.mode = new CommandMode.start_with(browser, browser.web.uri ?? "");
+                     var newtext = "";
+                     if (browser.web.uri != null && browser.web.load_status != WebKit.LoadStatus.FAILED)
+                        newtext = browser.web.uri;
+                     browser.mode = new CommandMode.start_with(browser, newtext);
                      return true;
                   case 'r':
                      browser.web.reload();
@@ -265,6 +268,8 @@ class BrowserWindow : Gtk.Window {
       web.notify["uri"].connect(() => { this.title = web.title ?? web.uri; });
 
       web.notify["uri"].connect(() => { if (is_loading()) cmdentry.text = web.uri; });
+      web.load_error.connect(() => { cmdentry.text = ""; this.title = "shower"; return false; });
+
       web.notify["progress"].connect(() => { cmdentry.set_progress_fraction(web.progress); });
 
       web.notify["uri"].connect(this.show_current_uri);
@@ -397,6 +402,9 @@ class BrowserWindow : Gtk.Window {
    }
 
    private void show_current_uri() {
+      if (web.load_status == WebKit.LoadStatus.FAILED)
+         return;
+
       var trust = is_trusted();
 
       if (trust != null) {
