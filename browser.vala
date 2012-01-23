@@ -266,9 +266,7 @@ class BrowserWindow : Gtk.Window {
 
       web.notify["title"].connect(() => { this.title = web.title ?? web.uri; });
       web.notify["uri"].connect(() => { this.title = web.title ?? web.uri; });
-
       web.notify["uri"].connect(() => { if (is_loading()) cmdentry.text = web.uri; });
-      web.load_error.connect(() => { cmdentry.text = ""; this.title = "shower"; return false; });
 
       web.notify["progress"].connect(() => { cmdentry.set_progress_fraction(web.progress); });
 
@@ -336,6 +334,11 @@ class BrowserWindow : Gtk.Window {
          mode = new LoadMode(this);
       else if (!is_loading())
          mode = new InteractMode(this);
+
+      if (web.load_status == WebKit.LoadStatus.FAILED) {
+         this.title = "shower";
+         cmdentry.text = "";
+      }
    }
 
    private bool handle_download(WebKit.Download download) {
