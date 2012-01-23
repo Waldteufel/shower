@@ -5,8 +5,11 @@ class BrowserWindow : Gtk.Window {
 
    private static Regex scheme_regex;
    private static Regex https_regex;
+   private static string bookmark_path;
 
    static construct {
+      bookmark_path = Path.build_filename(Environment.get_user_config_dir(), "shower", "bookmarks");
+
       try {
          scheme_regex = new Regex("^([^:]+)(:.*)");
          https_regex = new Regex("^https://");
@@ -20,6 +23,8 @@ class BrowserWindow : Gtk.Window {
    private Gtk.Container statusbar;
    private Gtk.Label statuslabel;
    private Gtk.Entry cmdentry;
+
+   public KeyFile bookmarks;
 
    abstract class Mode : Object {
       public BrowserWindow browser { get; construct; }
@@ -70,6 +75,9 @@ class BrowserWindow : Gtk.Window {
                      return true;
                   case 'f':
                      browser.mode = new CommandMode.prompt(browser, "/");
+                     return true;
+                  case '#':
+                     browser.mode = new CommandMode.prompt(browser, "#");
                      return true;
                   case 'u':
                      browser.web.set_view_source_mode(!browser.web.get_view_source_mode());
@@ -213,6 +221,15 @@ class BrowserWindow : Gtk.Window {
       st.enable_offline_web_application_cache = false;
       st.user_stylesheet_uri = "file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "style.css");
 
+      bookmarks = new KeyFile();
+      try {
+         bookmarks.load_from_file(bookmark_path, KeyFileFlags.NONE);
+      } catch (FileError err) {
+         stderr.printf("Could not open bookmark file at %s\n", bookmark_path);
+      } catch (KeyFileError err) {
+         stderr.printf("Malformed bookmark file at %s\n", bookmark_path);
+      }
+
       var scr = new Gtk.ScrolledWindow(null, null);
       scr.add(web);
       vbox.pack_start(scr, true, true, 0);
@@ -345,6 +362,12 @@ class BrowserWindow : Gtk.Window {
          this.mode = new FindMode(this, cmd[1:cmd.length]);
       } else if (cmd[0] == '?') {
          this.search_for(cmd[1:cmd.length]);
+      } else if (cmd[0] == '#') {
+         try {
+            this.load_uri(bookmarks.get_string("Bookmarks", cmd[1:cmd.length]));
+         } catch (KeyFileError err) {
+            this.load_uri(cmd);
+         }
       } else if (cmd.index_of_char(' ') >= 0) { // Heuristic
          this.search_for(cmd);
       } else {         
