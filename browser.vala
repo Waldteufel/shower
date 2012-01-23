@@ -57,7 +57,7 @@ class BrowserWindow : Gtk.Window {
             case Gdk.ModifierType.CONTROL_MASK:
                switch (key) {
                   case '0':
-                     browser.load_uri("file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "bookmarks.html"));
+                     browser.load_uri("file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "dashboard.html"));
                      return true;
                   case 'l':
                      browser.mode = new CommandMode.start_with(browser, browser.web.uri ?? "");
