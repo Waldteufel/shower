@@ -6,10 +6,13 @@ class BrowserWindow : Gtk.Window {
    private static Regex scheme_regex;
    private static Regex https_regex;
    private static Regex anchor_regex;
+
    private static string anchor_path;
+   private static string adblock_path;
 
    static construct {
       anchor_path = Path.build_filename(Environment.get_user_config_dir(), "shower", "anchors");
+      adblock_path = Path.build_filename(Environment.get_user_config_dir(), "shower", "adblock");
 
       try {
          scheme_regex = new Regex("^([^:]+)(:.*)");
@@ -27,6 +30,7 @@ class BrowserWindow : Gtk.Window {
    private Gtk.Entry cmdentry;
 
    private KeyFile anchors;
+   private Regex adblock;
 
    abstract class Mode : Object {
       public BrowserWindow browser { get; construct; }
@@ -226,6 +230,9 @@ class BrowserWindow : Gtk.Window {
       st.enable_offline_web_application_cache = false;
       st.user_stylesheet_uri = "file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "style.css");
 
+
+      // read anchors file
+
       anchors = new KeyFile();
       try {
          anchors.load_from_file(anchor_path, KeyFileFlags.NONE);
@@ -233,6 +240,19 @@ class BrowserWindow : Gtk.Window {
          stderr.printf("Could not open anchor file at %s\n", anchor_path);
       } catch (KeyFileError err) {
          stderr.printf("Malformed anchor file at %s\n", anchor_path);
+      }
+
+
+      // read blocklist
+
+      try {
+         string text;
+         FileUtils.get_contents(adblock_path, out text);
+         adblock = new Regex(text, RegexCompileFlags.EXTENDED | RegexCompileFlags.OPTIMIZE);
+      } catch (FileError err) {
+         stderr.printf("Could not open adblock file at %s\n", adblock_path);
+      } catch (RegexError err) {
+         stderr.printf("Malformed adblock file at %s\n", adblock_path);
       }
 
       var scr = new Gtk.ScrolledWindow(null, null);
@@ -323,9 +343,12 @@ class BrowserWindow : Gtk.Window {
 
    private void filter_requests(WebKit.WebFrame frame, WebKit.WebResource resource, WebKit.NetworkRequest req, WebKit.NetworkResponse? resp) {
       if (req.message == null) return;
+
+      if (adblock != null && adblock.match(req.message.uri.to_string(false)))
+         req.message.uri = new Soup.URI("about:blank");
+
       var referer = req.message.request_headers.get_one("Referer");
-      if (referer == null) return;
-      if (!req.message.uri.host_equal(new Soup.URI(referer)))
+      if (referer != null && !req.message.uri.host_equal(new Soup.URI(referer)))
          req.message.request_headers.remove("Referer");
    }
 

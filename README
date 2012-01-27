@@ -31,6 +31,9 @@ The dashboard is just a HTML file placed under
 ~/.config/shower/dashboard.html - an example is
 provided.
 
+The file ~/.config/shower/adblock can contain a
+single regular expression to block URIs.
+
 
 Dependencies:
 * Vala from http://live.gnome.org/Vala
