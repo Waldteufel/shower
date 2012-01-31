@@ -248,7 +248,7 @@ class BrowserWindow : Gtk.Window {
       try {
          string text;
          FileUtils.get_contents(adblock_path, out text);
-         adblock = new Regex(text, RegexCompileFlags.EXTENDED | RegexCompileFlags.OPTIMIZE);
+         adblock = new Regex(text, RegexCompileFlags.EXTENDED | RegexCompileFlags.OPTIMIZE | RegexCompileFlags.NO_AUTO_CAPTURE);
       } catch (FileError err) {
          stderr.printf("Could not open adblock file at %s\n", adblock_path);
       } catch (RegexError err) {
