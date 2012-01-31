@@ -348,7 +348,7 @@ class BrowserWindow : Gtk.Window {
          req.message.uri = new Soup.URI("about:blank");
 
       var referer = req.message.request_headers.get_one("Referer");
-      if (referer != null && !req.message.uri.host_equal(new Soup.URI(referer)))
+      if (referer != null && !Soup.URI.host_equal(req.message.uri, new Soup.URI(referer)))
          req.message.request_headers.remove("Referer");
    }
 
