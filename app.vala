@@ -18,11 +18,13 @@ abstract class Application : Unique.App {
    public new void watch_window(Gtk.Window window) {
       base.watch_window(window);
       ++nwindows;
-      window.destroy.connect(() => {
-         --nwindows;
-         if (nwindows == 0)
-            Gtk.main_quit();
-      });
+      window.destroy.connect(this.window_destroyed);
+   }
+
+   public void window_destroyed() {
+      --nwindows;
+      if (nwindows == 0)
+         Gtk.main_quit();
    }
 
    protected abstract void handle_cmd(string cmd);

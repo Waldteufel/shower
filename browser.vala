@@ -24,7 +24,6 @@ class BrowserWindow : Gtk.Window {
    }
 
    private WebKit.WebView web;
-
    private Gtk.Container statusbar;
    private Gtk.Label statuslabel;
    private Gtk.Entry cmdentry;
@@ -33,7 +32,7 @@ class BrowserWindow : Gtk.Window {
    private Regex adblock;
 
    abstract class Mode : Object {
-      public BrowserWindow browser { get; construct; }
+      public weak BrowserWindow browser { get; construct; }
 
       protected abstract void enter();
       construct { this.enter(); }
@@ -228,6 +227,7 @@ class BrowserWindow : Gtk.Window {
       st.enable_html5_local_storage = false;
       st.enable_html5_database = false;
       st.enable_offline_web_application_cache = false;
+      st.enable_page_cache = true;
       st.user_stylesheet_uri = "file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "style.css");
 
 
@@ -254,6 +254,7 @@ class BrowserWindow : Gtk.Window {
       } catch (RegexError err) {
          stderr.printf("Malformed adblock file at %s\n", adblock_path);
       }
+
 
       var scr = new Gtk.ScrolledWindow(null, null);
       scr.add(web);
@@ -317,7 +318,7 @@ class BrowserWindow : Gtk.Window {
       web.button_press_event.connect(this.handle_click);
 
       this.key_press_event.connect((press) => {
-         return this.mode.key_pressed(press.state & Gdk.ModifierType.MODIFIER_MASK, press.keyval);
+         return mode.key_pressed(press.state & Gdk.ModifierType.MODIFIER_MASK, press.keyval);
       });
 
       this.mode = new InteractMode(this);
@@ -365,18 +366,15 @@ class BrowserWindow : Gtk.Window {
    }
 
    private bool handle_download(WebKit.Download download) {
-      var chooser = new Gtk.FileChooserDialog(null, this, Gtk.FileChooserAction.SAVE,
-            Gtk.Stock.CANCEL, Gtk.ResponseType.CANCEL,
-            Gtk.Stock.SAVE, Gtk.ResponseType.ACCEPT);
-      chooser.do_overwrite_confirmation = true;
-      chooser.set_current_folder("/tmp");
-      chooser.set_current_name(download.suggested_filename);
-      if (chooser.run() == Gtk.ResponseType.ACCEPT) {
-         download.set_destination_uri(chooser.get_uri());
-         chooser.destroy();
+      var filename = Path.get_basename(download.suggested_filename);
+      var dialog = new Gtk.MessageDialog(this, Gtk.DialogFlags.MODAL, Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, "%s", filename);
+      dialog.title = "Download?";
+      if (dialog.run() == Gtk.ResponseType.YES) {
+         download.set_destination_uri("file://" + Path.build_filename("/tmp", filename));
+         dialog.destroy();
          return true;
       } else {
-         chooser.destroy();
+         dialog.destroy();
          return false;
       }
    }
