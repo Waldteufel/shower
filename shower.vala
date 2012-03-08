@@ -58,7 +58,10 @@ class BrowserApplication : Application {
       var cookiejar = new Soup.CookieJarText(cookiefile, true);
       cookiejar.accept_policy = Soup.CookieJarAcceptPolicy.NO_THIRD_PARTY;
       WebKit.get_default_session().add_feature = cookiejar;
-      WebKit.set_default_web_database_quota(0);
+
+      var datadir = Path.build_filename(Environment.get_user_data_dir(), "webkit");
+      DirUtils.create(datadir, 0000);
+      FileUtils.chmod(datadir, 0000);
    }
 
 }

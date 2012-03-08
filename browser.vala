@@ -224,9 +224,6 @@ class BrowserWindow : Gtk.Window {
 
       var st = web.get_settings();
       st.enable_dns_prefetching = false;
-      st.enable_html5_local_storage = false;
-      st.enable_html5_database = false;
-      st.enable_offline_web_application_cache = false;
       st.enable_page_cache = true;
       st.user_stylesheet_uri = "file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "style.css");
 
