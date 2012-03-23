@@ -359,8 +359,8 @@ class BrowserWindow : Gtk.Window {
          mode = new InteractMode(this);
 
       if (web.load_status == WebKit.LoadStatus.FAILED) {
-         this.title = "shower";
-         cmdentry.text = "";
+         this.title = web.title ?? web.uri;
+         cmdentry.text = web.uri;
       }
    }
 
@@ -430,9 +430,6 @@ class BrowserWindow : Gtk.Window {
    }
 
    private void show_current_uri() {
-      if (web.load_status == WebKit.LoadStatus.FAILED)
-         return;
-
       var trust = is_trusted();
 
       if (trust != null) {
