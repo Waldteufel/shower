@@ -329,7 +329,8 @@ class BrowserWindow : Gtk.Window {
       if (modif == Gdk.ModifierType.CONTROL_MASK && press.button == 1) {
          var linkuri = web.get_hit_test_result(press).link_uri;
          if (linkuri != null && !linkuri.has_prefix("javascript:")) {
-            new BrowserWindow(linkuri);
+            var win = new BrowserWindow(linkuri);
+            win.show();
             return true;
          }
       }
