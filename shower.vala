@@ -13,12 +13,8 @@ class BrowserApplication : Application {
    }
 
    protected override void handle_cmd(string cmd) {
-      var browser = new BrowserWindow();
+      var browser = new BrowserWindow(cmd);
       browser.show();
-      if (cmd == " ")
-         browser.load_empty();
-      else
-         browser.handle_command(cmd);
    }
 
    protected override void initialize() {

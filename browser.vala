@@ -204,19 +204,7 @@ class BrowserWindow : Gtk.Window {
 
    private Mode mode;
 
-   private void ask_for_url_once_when_loaded() {
-      if (web.load_status == WebKit.LoadStatus.FINISHED) {
-         this.mode = new CommandMode(this);
-         web.notify["load-status"].disconnect(this.ask_for_url_once_when_loaded);
-      }
-   }
-
-   public void load_empty() {
-      web.load_string("<!DOCTYPE html><html><head><title>shower</title></head><body></body></html>", "text/html", "UTF-8", "");
-      web.notify["load-status"].connect(ask_for_url_once_when_loaded);
-   }
-
-   public BrowserWindow() {
+   public BrowserWindow(string initial_cmd = " ") {
       this.set_default_size(640, 480);
 
       var vbox = new Gtk.VBox(false, 0);
@@ -316,7 +304,10 @@ class BrowserWindow : Gtk.Window {
          return mode.key_pressed(press.state & Gdk.ModifierType.MODIFIER_MASK, press.keyval);
       });
 
-      this.mode = new InteractMode(this);
+      if (initial_cmd == " ")
+         this.mode = new CommandMode(this);
+      else
+         this.handle_command(initial_cmd);
    }
 
    /* messy workaround. during the notify::load-status for a failed load, the correct uri will be 
@@ -337,9 +328,7 @@ class BrowserWindow : Gtk.Window {
       if (modif == Gdk.ModifierType.CONTROL_MASK && press.button == 1) {
          var linkuri = web.get_hit_test_result(press).link_uri;
          if (linkuri != null && !linkuri.has_prefix("javascript:")) {
-            var win = new BrowserWindow();
-            win.show();
-            win.load_uri(linkuri);
+            new BrowserWindow(linkuri);
             return true;
          }
       }
