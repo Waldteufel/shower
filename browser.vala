@@ -70,10 +70,7 @@ class BrowserWindow : Gtk.Window {
                      browser.load_uri("file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "dashboard.html"));
                      return true;
                   case 'l':
-                     var newtext = "";
-                     if (browser.current_uri != null && browser.web.load_status != WebKit.LoadStatus.FAILED)
-                        newtext = browser.current_uri;
-                     browser.mode = new CommandMode.start_with(browser, newtext);
+                     browser.mode = new CommandMode.start_with(browser, browser.current_uri);
                      return true;
                   case 'r':
                      browser.web.reload();
@@ -359,6 +356,9 @@ class BrowserWindow : Gtk.Window {
 
    private void load_status_changed() {
       show_uri_and_title();
+
+      if (mode is LoadMode)
+         cmdentry.text = current_uri;
 
       if (web.load_status == WebKit.LoadStatus.PROVISIONAL)
          mode = new LoadMode(this);
