@@ -71,8 +71,8 @@ class BrowserWindow : Gtk.Window {
                      return true;
                   case 'l':
                      var newtext = "";
-                     if (browser.web.uri != null && browser.web.load_status != WebKit.LoadStatus.FAILED)
-                        newtext = browser.web.uri;
+                     if (browser.current_uri != null && browser.web.load_status != WebKit.LoadStatus.FAILED)
+                        newtext = browser.current_uri;
                      browser.mode = new CommandMode.start_with(browser, newtext);
                      return true;
                   case 'r':
@@ -281,13 +281,12 @@ class BrowserWindow : Gtk.Window {
       this.add(vbox);
       vbox.show_all();
 
-      web.notify["title"].connect(() => { this.title = web.title ?? web.uri; });
-      web.notify["uri"].connect(() => { this.title = web.title ?? web.uri; });
-      web.notify["uri"].connect(() => { if (is_loading()) cmdentry.text = web.uri; });
+      web.notify["title"].connect(this.show_uri_and_title);
+      web.notify["uri"].connect(this.show_uri_and_title);
 
       web.notify["progress"].connect(() => { cmdentry.set_progress_fraction(web.progress); });
 
-      web.notify["uri"].connect(this.show_current_uri);
+      web.notify["uri"].connect(this.show_uri_and_title);
       web.hovering_over_link.connect(this.show_hovered_link);
 
       web.notify["load-status"].connect(this.load_status_changed);
@@ -307,7 +306,7 @@ class BrowserWindow : Gtk.Window {
       });
 
       statusbar.enter_notify_event.connect(() => {
-         this.show_current_uri();
+         this.show_uri_and_title();
          return true;
       });
 
@@ -318,6 +317,19 @@ class BrowserWindow : Gtk.Window {
       });
 
       this.mode = new InteractMode(this);
+   }
+
+   /* messy workaround. during the notify::load-status for a failed load, the correct uri will be 
+      in the provisional data source, whereas later on it will say "about:blank" for the error page */
+   private string last_failed_uri;
+
+   public string current_uri {
+      get {
+         if (web.load_status == WebKit.LoadStatus.FAILED)
+            return last_failed_uri;
+         else
+            return web.get_main_frame().get_data_source().get_request().uri; 
+      }
    }
 
    private bool handle_click(Gdk.EventButton press) {
@@ -353,15 +365,15 @@ class BrowserWindow : Gtk.Window {
    }
 
    private void load_status_changed() {
+      if (web.load_status == WebKit.LoadStatus.FAILED)
+         last_failed_uri = web.get_main_frame().get_provisional_data_source().get_request().uri;
+
+      show_uri_and_title();
+
       if (web.load_status == WebKit.LoadStatus.PROVISIONAL)
          mode = new LoadMode(this);
       else if (!is_loading())
          mode = new InteractMode(this);
-
-      if (web.load_status == WebKit.LoadStatus.FAILED) {
-         this.title = web.title ?? web.uri;
-         cmdentry.text = web.uri;
-      }
    }
 
    private bool handle_download(WebKit.Download download) {
@@ -416,25 +428,24 @@ class BrowserWindow : Gtk.Window {
    }
 
    private void show_hovered_link(string? title, string? uri) {
-      if (uri == null) {
-         show_current_uri();
-      } else {
+      if (uri == null)
+         show_uri_and_title();
+      else
          statuslabel.set_markup(Markup.printf_escaped("<span color='cyan'>%s</span>", uri));
-      }
    }
 
    private bool? is_trusted() {
-      if (web.uri == null) return null;
-      if (!https_regex.match(web.uri)) return null;
+      if (current_uri == null) return null;
+      if (!https_regex.match(current_uri)) return null;
       return (web.get_main_frame().get_data_source().get_request().get_message().flags & Soup.MessageFlags.CERTIFICATE_TRUSTED) != 0;
    }
 
-   private void show_current_uri() {
+   private void show_uri_and_title() {
       var trust = is_trusted();
 
       if (trust != null) {
          MatchInfo match;
-         scheme_regex.match(web.uri, 0, out match);
+         scheme_regex.match(current_uri, 0, out match);
 
          string color, underline;
          if (trust) {
@@ -447,8 +458,10 @@ class BrowserWindow : Gtk.Window {
 
          statuslabel.set_markup(Markup.printf_escaped("<span color='%s' underline='%s'>%s</span>%s", color, underline, match.fetch(1), match.fetch(2)));
       } else {
-         statuslabel.set_markup(Markup.escape_text(web.uri));
+         statuslabel.set_markup(Markup.escape_text(current_uri));
       }
+
+      this.title = web.title ?? current_uri;
    }
 
    private WebKit.WebView spawn_view() {   
