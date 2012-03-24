@@ -316,10 +316,12 @@ class BrowserWindow : Gtk.Window {
 
    public string current_uri {
       get {
-         if (web.load_status == WebKit.LoadStatus.FAILED)
+         if (web.load_status == WebKit.LoadStatus.FAILED) {
             return last_failed_uri;
-         else
-            return web.get_main_frame().get_data_source().get_request().uri; 
+         } else {
+            var request = web.get_main_frame().get_data_source().get_request();
+            return request != null ? request.uri : "";
+         }
       }
    }
 
