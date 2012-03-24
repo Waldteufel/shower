@@ -335,10 +335,6 @@ class BrowserWindow : Gtk.Window {
       return false;
    }
 
-   private bool is_loading() {
-      return (web.load_status != WebKit.LoadStatus.FINISHED) && (web.load_status != WebKit.LoadStatus.FAILED);
-   }
-
    private void filter_requests(WebKit.WebFrame frame, WebKit.WebResource resource, WebKit.NetworkRequest req, WebKit.NetworkResponse? resp) {
       if (req.message == null) return;
 
@@ -359,10 +355,20 @@ class BrowserWindow : Gtk.Window {
       if (mode is LoadMode)
          cmdentry.text = get_current_uri();
 
-      if (web.load_status == WebKit.LoadStatus.PROVISIONAL)
-         mode = new LoadMode(this);
-      else if (!is_loading())
-         mode = new InteractMode(this);
+      switch (web.load_status) {
+         case WebKit.LoadStatus.PROVISIONAL:
+            mode = new LoadMode(this);
+            break;
+
+         case WebKit.LoadStatus.FINISHED:
+         case WebKit.LoadStatus.FAILED:
+            mode = new InteractMode(this);
+            break;
+
+         default:
+            /* nothing */
+            break;
+      }
    }
 
    private bool handle_download(WebKit.Download download) {
