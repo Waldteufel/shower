@@ -310,18 +310,20 @@ class BrowserWindow : Gtk.Window {
          this.handle_command(initial_cmd);
    }
 
-   /* messy workaround. during the notify::load-status for a failed load, the correct uri will be 
-      in the provisional data source, whereas later on it will say "about:blank" for the error page */
-   private string last_failed_uri;
-
    public string current_uri {
-      get {
+      owned get {
          if (web.load_status == WebKit.LoadStatus.FAILED) {
-            return last_failed_uri;
-         } else {
-            var request = web.get_main_frame().get_data_source().get_request();
-            return request != null ? request.uri : "";
+            string uri = web.get_main_frame().get_data_source().get_unreachable_uri();
+            if (uri != null) return uri;
          }
+
+         if (web.load_status != WebKit.LoadStatus.FINISHED) {
+            var ds = web.get_main_frame().get_provisional_data_source();
+            if (ds != null)
+               return ds.get_request().uri;
+         }
+
+         return web.uri ?? "";
       }
    }
 
@@ -356,9 +358,6 @@ class BrowserWindow : Gtk.Window {
    }
 
    private void load_status_changed() {
-      if (web.load_status == WebKit.LoadStatus.FAILED)
-         last_failed_uri = web.get_main_frame().get_provisional_data_source().get_request().uri;
-
       show_uri_and_title();
 
       if (web.load_status == WebKit.LoadStatus.PROVISIONAL)
