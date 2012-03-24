@@ -70,7 +70,7 @@ class BrowserWindow : Gtk.Window {
                      browser.load_uri("file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "dashboard.html"));
                      return true;
                   case 'l':
-                     browser.mode = new CommandMode.start_with(browser, browser.current_uri);
+                     browser.mode = new CommandMode.start_with(browser, browser.get_current_uri());
                      return true;
                   case 'r':
                      browser.web.reload();
@@ -307,21 +307,19 @@ class BrowserWindow : Gtk.Window {
          this.handle_command(initial_cmd);
    }
 
-   public string current_uri {
-      owned get {
-         if (web.load_status == WebKit.LoadStatus.FAILED) {
-            string uri = web.get_main_frame().get_data_source().get_unreachable_uri();
-            if (uri != null) return uri;
-         }
-
-         if (web.load_status != WebKit.LoadStatus.FINISHED) {
-            var ds = web.get_main_frame().get_provisional_data_source();
-            if (ds != null)
-               return ds.get_request().uri;
-         }
-
-         return web.uri ?? "";
+   public string get_current_uri() {
+      if (web.load_status == WebKit.LoadStatus.FAILED) {
+         string uri = web.get_main_frame().get_data_source().get_unreachable_uri();
+         if (uri != null) return uri;
       }
+
+      if (web.load_status != WebKit.LoadStatus.FINISHED) {
+         var ds = web.get_main_frame().get_provisional_data_source();
+         if (ds != null)
+            return ds.get_request().uri;
+      }
+
+      return web.uri ?? "";
    }
 
    private bool handle_click(Gdk.EventButton press) {
@@ -359,7 +357,7 @@ class BrowserWindow : Gtk.Window {
       show_uri_and_title();
 
       if (mode is LoadMode)
-         cmdentry.text = current_uri;
+         cmdentry.text = get_current_uri();
 
       if (web.load_status == WebKit.LoadStatus.PROVISIONAL)
          mode = new LoadMode(this);
@@ -426,20 +424,23 @@ class BrowserWindow : Gtk.Window {
    }
 
    private bool? is_trusted() {
-      if (current_uri == null) return null;
-      if (!https_regex.match(current_uri)) return null;
-      return (web.get_main_frame().get_data_source().get_request().get_message().flags & Soup.MessageFlags.CERTIFICATE_TRUSTED) != 0;
+      var request = web.get_main_frame().get_data_source().get_request();
+
+      if (request == null)
+         return null;
+
+      return (request.get_message().flags & Soup.MessageFlags.CERTIFICATE_TRUSTED) != 0;
    }
 
    private void show_uri_and_title() {
-      var trust = is_trusted();
+      string current_uri = get_current_uri();
 
-      if (trust != null) {
+      if (https_regex.match(current_uri)) {
          MatchInfo match;
          scheme_regex.match(current_uri, 0, out match);
 
          string color, underline;
-         if (trust) {
+         if (is_trusted()) {
             color = "green";
             underline = "single";
          } else {
