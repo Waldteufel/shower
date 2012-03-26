@@ -160,12 +160,54 @@ class BrowserWindow : Gtk.Window {
       protected override void enter() {
          browser.cmdentry.editable = false;
          browser.statusbar.hide();
-         browser.cmdentry.show();   
+         browser.cmdentry.text = browser.get_current_uri();
+         browser.cmdentry.show();
       }
 
       public override bool key_pressed(Gdk.ModifierType modif, uint key) {
          if (modif == 0 && key == 0xff1b) {
             browser.web.stop_loading();
+            return true;
+         }
+         return base.key_pressed(modif, key);
+      }
+   }
+
+   class DownloadMode : Mode {
+      public WebKit.Download download { get; construct; }
+      public DownloadMode(BrowserWindow browser, WebKit.Download dl) {
+         Object(browser: browser, download: dl);
+      }
+
+      protected override void enter() {
+         browser.cmdentry.editable = false;
+         browser.statusbar.hide();
+         browser.cmdentry.show();
+
+         download.notify["progress"].connect(this.update_progress);
+         download.error.connect(this.handle_error);
+      }
+
+      private bool handle_error(int code, int detail, string reason) {
+         var dialog = new Gtk.MessageDialog(browser, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "%s", reason);
+         dialog.title = "Download";
+         dialog.run();
+         browser.mode = new InteractMode(browser);
+         return false;
+      }
+
+      private void update_progress() {
+         browser.cmdentry.text = download.get_uri();
+         browser.cmdentry.set_progress_fraction(download.progress);
+
+         if (download.progress == 1)
+            browser.mode = new InteractMode(browser);
+      }
+
+      public override bool key_pressed(Gdk.ModifierType modif, uint key) {
+         if (modif == 0 && key == 0xff1b) {
+            download.cancel();
+            browser.mode = new InteractMode(browser);
             return true;
          }
          return base.key_pressed(modif, key);
@@ -350,10 +392,8 @@ class BrowserWindow : Gtk.Window {
    }
 
    private void load_status_changed() {
-      show_uri_and_title();
-
-      if (mode is LoadMode)
-         cmdentry.text = get_current_uri();
+      if (mode is DownloadMode)
+         return;
 
       switch (web.load_status) {
          case WebKit.LoadStatus.PROVISIONAL:
@@ -376,8 +416,9 @@ class BrowserWindow : Gtk.Window {
       var dialog = new Gtk.MessageDialog(this, Gtk.DialogFlags.MODAL, Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, "%s", filename);
       dialog.title = "Download?";
       if (dialog.run() == Gtk.ResponseType.YES) {
-         download.set_destination_uri("file://" + Path.build_filename("/tmp", filename));
          dialog.destroy();
+         download.set_destination_uri("file://" + Path.build_filename("/tmp", filename));
+         mode = new DownloadMode(this, download);
          return true;
       } else {
          dialog.destroy();
