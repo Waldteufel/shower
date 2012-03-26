@@ -192,6 +192,7 @@ class BrowserWindow : Gtk.Window {
          var dialog = new Gtk.MessageDialog(browser, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "%s", reason);
          dialog.title = "Download";
          dialog.run();
+         dialog.destroy();
          browser.mode = new InteractMode(browser);
          return false;
       }
