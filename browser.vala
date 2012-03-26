@@ -44,6 +44,9 @@ class BrowserWindow : Gtk.Window {
                   case 'w':
                      browser.destroy();
                      return true;
+                  case 0xff67: // GDK_KEY_Menu
+                     browser.load_uri("file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "dashboard.html"));
+                     return true;
                }
                break;
             case Gdk.ModifierType.MOD1_MASK:
@@ -66,9 +69,6 @@ class BrowserWindow : Gtk.Window {
          switch (modif) {
             case Gdk.ModifierType.CONTROL_MASK:
                switch (key) {
-                  case 0xff67: // GDK_KEY_Menu
-                     browser.load_uri("file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "dashboard.html"));
-                     return true;
                   case 'l':
                      browser.mode = new CommandMode.start_with(browser, browser.get_current_uri());
                      return true;
@@ -207,7 +207,6 @@ class BrowserWindow : Gtk.Window {
       public override bool key_pressed(Gdk.ModifierType modif, uint key) {
          if (modif == 0 && key == 0xff1b) {
             download.cancel();
-            browser.mode = new InteractMode(browser);
             return true;
          }
          return base.key_pressed(modif, key);
