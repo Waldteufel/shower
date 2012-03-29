@@ -166,6 +166,7 @@ class BrowserWindow : Gtk.Window {
          browser.statusbar.hide();
          browser.cmdentry.text = browser.get_current_uri();
          browser.cmdentry.show();
+         browser.web.grab_focus();
          browser.cmdentry.select_region(0, 0);
       }
 
