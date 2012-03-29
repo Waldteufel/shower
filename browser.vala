@@ -10,6 +10,8 @@ class BrowserWindow : Gtk.Window {
    private static string anchor_path;
    private static string adblock_path;
 
+   private static string error_tpl = "<pre><span style='padding: .1em; background-color: red; color: white'>ERROR:</span> %s</pre>";
+
    static construct {
       anchor_path = Path.build_filename(Environment.get_user_config_dir(), "shower", "anchors");
       adblock_path = Path.build_filename(Environment.get_user_config_dir(), "shower", "adblock");
@@ -110,6 +112,8 @@ class BrowserWindow : Gtk.Window {
          browser.web.grab_focus();
          browser.cmdentry.hide();
          browser.statusbar.show();
+         browser.show_uri_and_title();
+
          browser.web.unmark_text_matches();
          browser.web.set_highlight_text_matches(false);
       }
@@ -162,6 +166,7 @@ class BrowserWindow : Gtk.Window {
          browser.statusbar.hide();
          browser.cmdentry.text = browser.get_current_uri();
          browser.cmdentry.show();
+         browser.cmdentry.select_region(0, 0);
       }
 
       public override bool key_pressed(Gdk.ModifierType modif, uint key) {
@@ -183,6 +188,7 @@ class BrowserWindow : Gtk.Window {
          browser.cmdentry.editable = false;
          browser.statusbar.hide();
          browser.cmdentry.show();
+         browser.cmdentry.select_region(0, 0);
 
          download.notify["progress"].connect(this.update_progress);
          download.error.connect(this.handle_error);
@@ -326,11 +332,7 @@ class BrowserWindow : Gtk.Window {
 
       web.resource_request_starting.connect(this.filter_requests);
 
-      cmdentry.activate.connect(() => {
-         cmdentry.select_region(0, 0);
-         web.grab_focus();
-         this.handle_command(cmdentry.text);
-      });
+      cmdentry.activate.connect(() => { this.handle_command(cmdentry.text); });
 
       statusbar.enter_notify_event.connect(() => {
          this.show_uri_and_title();
@@ -338,6 +340,7 @@ class BrowserWindow : Gtk.Window {
       });
 
       web.button_press_event.connect(this.handle_click);
+      web.load_error.connect(this.load_error);
 
       this.key_press_event.connect((press) => {
          return mode.key_pressed(press.state & Gdk.ModifierType.MODIFIER_MASK, press.keyval);
@@ -375,6 +378,11 @@ class BrowserWindow : Gtk.Window {
          }
       }
       return false;
+   }
+
+   private bool load_error(WebKit.WebView view, WebKit.WebFrame frame, string uri, Error err) {
+      web.get_main_frame().load_alternate_string(Markup.printf_escaped(error_tpl, err.message), uri, uri);
+      return true;
    }
 
    private void filter_requests(WebKit.WebFrame frame, WebKit.WebResource resource, WebKit.NetworkRequest req, WebKit.NetworkResponse? resp) {
@@ -448,9 +456,9 @@ class BrowserWindow : Gtk.Window {
    }
 
    public void handle_command(string cmd) {
-      if (cmd == "") return;
-
-      if (cmd[0] == '/') {
+      if (cmd == "") {
+         this.mode = new InteractMode(this);
+      } else if (cmd[0] == '/') {
          this.mode = new FindMode(this, cmd[1:cmd.length]);
       } else if (cmd[0] == '#') {
          MatchInfo match;
@@ -519,8 +527,6 @@ class BrowserWindow : Gtk.Window {
    }
 
    public void load_uri(string uri) {
-      cmdentry.text = uri;
-      statuslabel.set_markup(Markup.escape_text(uri));
       this.web.load_uri(uri);
    }
 
