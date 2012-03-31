@@ -382,7 +382,7 @@ class BrowserWindow : Gtk.Window {
    }
 
    private bool load_error(WebKit.WebView view, WebKit.WebFrame frame, string uri, Error err) {
-      web.get_main_frame().load_alternate_string(Markup.printf_escaped(error_tpl, err.message), uri, uri);
+      frame.load_alternate_string(Markup.printf_escaped(error_tpl, err.message), uri, uri);
       return true;
    }
 
@@ -467,7 +467,7 @@ class BrowserWindow : Gtk.Window {
          follow_anchor(match.fetch(1), match.fetch(2));
       } else if (cmd.contains(" ")) {
          follow_anchor("?", cmd);
-      } else {         
+      } else {
          this.load_uri(normalize_uri(cmd));
       }
    }
