@@ -251,16 +251,6 @@ class BrowserWindow : Gtk.Window {
    private Mode mode;
 
    public BrowserWindow(string initial_cmd = " ") {
-      this.set_default_size(640, 480);
-
-      var vbox = new Gtk.VBox(false, 0);
-      web = new WebKit.WebView();
-
-      var st = web.get_settings();
-      st.enable_dns_prefetching = false;
-      st.user_stylesheet_uri = "file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "style.css");
-
-
       // read anchors file
 
       anchors = new KeyFile();
@@ -285,6 +275,18 @@ class BrowserWindow : Gtk.Window {
          stderr.printf("Malformed adblock file at %s\n", adblock_path);
       }
 
+
+      // create GUI
+
+      this.set_default_size(640, 480);
+
+      var vbox = new Gtk.VBox(false, 0);
+
+      web = new WebKit.WebView();
+
+      var st = web.get_settings();
+      st.enable_dns_prefetching = false;
+      st.user_stylesheet_uri = "file://" + Path.build_filename(Environment.get_user_config_dir(), "shower", "style.css");
 
       var scr = new Gtk.ScrolledWindow(null, null);
       scr.add(web);
