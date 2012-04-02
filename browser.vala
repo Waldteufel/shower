@@ -10,7 +10,7 @@ class BrowserWindow : Gtk.Window {
    private static string anchor_path;
    private static string adblock_path;
 
-   private static string error_tpl = "<pre><span style='padding: .1em; background-color: red; color: white'>ERROR:</span> %s</pre>";
+   private static string error_tpl = "<pre><span style='padding: .1em; background-color: red; color: white'>E%d</span> %s</pre>";
 
    static construct {
       anchor_path = Path.build_filename(Environment.get_user_config_dir(), "shower", "anchors");
@@ -384,8 +384,12 @@ class BrowserWindow : Gtk.Window {
    }
 
    private bool load_error(WebKit.WebView view, WebKit.WebFrame frame, string uri, Error err) {
-      frame.load_alternate_string(Markup.printf_escaped(error_tpl, err.message), uri, uri);
-      return true;
+      if (err.code == WebKit.PluginError.WILL_HANDLE_LOAD) {
+         return false;
+      } else {
+         frame.load_alternate_string(Markup.printf_escaped(error_tpl, err.code, err.message), uri, uri);
+         return true;
+      }
    }
 
    private void filter_requests(WebKit.WebFrame frame, WebKit.WebResource resource, WebKit.NetworkRequest req, WebKit.NetworkResponse? resp) {
