@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
    <head>
+      <meta charset="UTF-8" />
       <title>Dashboard</title>
       <style>
          html { width: 100%; height: 100%; display: table }
@@ -9,10 +10,9 @@
                   border: 0px; }
 
          body { background-color: black; color: white }
-         body > div { margin: 1em }
-         section { border: 1px solid #444; -webkit-border-radius: 5px; padding: .5em; display: inline-block }
-         section > div { margin-top: .5em }
-         h1 { margin: 0em; font-size: 110%; color: #888 }
+         section { border: 1px solid #444; -webkit-border-radius: 5px; padding: .5em; margin:.5em; display: inline-block }
+         section > div { margin-top:.5em }
+         section > div:first-child { margin-top:0em }
          a {
             -webkit-transition: -webkit-box-shadow 0.1s ease-in-out;
             -webkit-border-radius: 5px;
@@ -24,7 +24,7 @@
          a > kbd { display:inline-block; background-color: #411; padding: .2em; margin-right: .5em; }
       </style>
       <script type="text/javascript">
-         var keys = new Array("1234567890", "QWERTZUIOP");
+         var keys = new Array("1234567890", "QWERTZUIOP", "ASDFGHJKL", "YXCVBNM");
 
          function keydown(ev) {
             var key = String.fromCharCode(ev.keyCode);
@@ -32,19 +32,19 @@
             for (var i = 0; i < keys.length; ++i) {
                idx = keys[i].indexOf(key);
                if (idx > -1) {
-                  window.location = document.getElementsByTagName("section")[i].getElementsByTagName("a")[idx].href;
+                  window.location = document.querySelectorAll(".keygroup")[i].getElementsByTagName("a")[idx].href;
                   return;
                }
             }
          }
 
          function enumerateLinks() {
-            var sections = document.getElementsByTagName("section");
+            var groups = document.querySelectorAll(".keygroup")
             var links;
             var newelem;
 
-            for (var i = 0; i < sections.length; ++i) {
-               links = sections[i].getElementsByTagName("a");
+            for (var i = 0; i < groups.length; ++i) {
+               links = groups[i].getElementsByTagName("a");
                for (var idx = 0; idx < links.length; ++idx) {
                   newelem = document.createElement("kbd");
                   newelem.innerHTML = keys[i][idx];
@@ -55,23 +55,38 @@
       </script>
    </head>
    <body onkeydown="keydown(event)" onload="enumerateLinks()">
-      <div>
+      <h1 style="color:lightgray; font-weight: 300">☙ Dashboard ❧</h1>
+
+      <div class="keygroup">
          <section>
-         <h1>News</h1>
          <div>
-            <a href="http://heise.de/">Heise</a>
-            <a href="http://golem.de/">Golem</a>
+            <a href="http://kernel.org">Kernel</a>
+            <a href="http://lkml.org">LKML</a>
          </div>
          </section>
       </div>
-      <div>
+
+      <div class="keygroup">
          <section>
-         <h1>Communities</h1>
          <div>
-            <a href="http://reddit.com/">Reddit</a>
-            <a href="http://wallbase.cc/">Wallbase</a>
+            <a href="http://gcc.gnu.org">GCC</a>
+            <a href="http://live.gnome.org/Vala">Vala</a>
          </div>
          </section>
+      </div>
+
+      <div class="keygroup">
+      <div>
+         <section>
+         <div><a href="http://heise.de/">Heise</a></div>
+         <div><a href="http://golem.de/">Golem</a></div>
+         </section>
+
+         <section>
+         <div><a href="http://dict.leo.org/">LEO</a></div>
+         <div><a href="http://google.de/">Google</a></div>
+         </section>
+      </div>
       </div>
    </body>
 </html>
