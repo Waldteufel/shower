@@ -401,7 +401,7 @@ class BrowserWindow : Gtk.Window {
       var referer = req.message.request_headers.get_one("Referer");
       if (referer != null) {
          var referer_uri = new Soup.URI(referer);
-         if (referer_uri.host != null && req.message.uri.host != null && !Soup.URI.host_equal(req.message.uri, referer_uri))
+         if (referer_uri.host != null && req.message.uri.host != null && !req.message.uri.host_equal(referer_uri))
             req.message.request_headers.remove("Referer");
       }
    }
