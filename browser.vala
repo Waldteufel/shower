@@ -33,6 +33,8 @@ class BrowserWindow : Gtk.Window {
    private KeyFile anchors;
    private Regex adblock;
 
+   public bool tainted = false;
+
    abstract class Mode : Object {
       public weak BrowserWindow browser { get; construct; }
 
@@ -413,11 +415,14 @@ class BrowserWindow : Gtk.Window {
       switch (web.load_status) {
          case WebKit.LoadStatus.PROVISIONAL:
             mode = new LoadMode(this);
+            if (tainted && adblock != null && adblock.match(get_current_uri()))
+               this.destroy();
             break;
 
          case WebKit.LoadStatus.FINISHED:
          case WebKit.LoadStatus.FAILED:
             mode = new InteractMode(this);
+            tainted = false;
             break;
 
          default:
@@ -520,6 +525,7 @@ class BrowserWindow : Gtk.Window {
 
    private WebKit.WebView spawn_view() {   
       var win = new BrowserWindow();
+      win.tainted = true;
       win.web.web_view_ready.connect(() => {
          win.show();
          return false;
