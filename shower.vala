@@ -53,7 +53,10 @@ class BrowserApplication : Application {
       var cookiefile = Path.build_filename(Environment.get_user_config_dir(), "shower", "cookies.txt");
       var cookiejar = new Soup.CookieJarText(cookiefile, true);
       cookiejar.accept_policy = Soup.CookieJarAcceptPolicy.NO_THIRD_PARTY;
-      WebKit.get_default_session().add_feature(cookiejar);
+
+      var session = WebKit.get_default_session();
+      session.ssl_use_system_ca_file = true;
+      session.add_feature(cookiejar);
 
       var datadir = Path.build_filename(Environment.get_user_data_dir(), "webkit");
       DirUtils.create(datadir, 0000);
