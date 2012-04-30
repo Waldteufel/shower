@@ -55,6 +55,7 @@ class BrowserApplication : Application {
       cookiejar.accept_policy = Soup.CookieJarAcceptPolicy.NO_THIRD_PARTY;
 
       var session = WebKit.get_default_session();
+      session.ssl_strict = false;
       session.ssl_use_system_ca_file = true;
       session.add_feature(cookiejar);
 
