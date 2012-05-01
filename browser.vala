@@ -455,7 +455,7 @@ class BrowserWindow : Gtk.Window {
 
    private bool handle_console_message(string msg, int line, string source) {
       stdout.printf("%s:%d: %s\n", source, line, msg);
-      return false;
+      return true;
    }
 
    public void follow_anchor(string name, string arg) {
