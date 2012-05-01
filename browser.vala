@@ -415,14 +415,23 @@ class BrowserWindow : Gtk.Window {
       switch (web.load_status) {
          case WebKit.LoadStatus.PROVISIONAL:
             mode = new LoadMode(this);
-            if (tainted && adblock != null && adblock.match(get_current_uri()))
-               this.destroy();
+            if (tainted) {
+               stdout.printf("TAINTED: %s\n", get_current_uri());
+               if (adblock != null && adblock.match(get_current_uri()))
+                  this.destroy();
+            }
+            break;
+
+         case WebKit.LoadStatus.COMMITTED:
+            if (get_current_uri() != "about:blank") {
+               tainted = false;
+               this.show();
+            }
             break;
 
          case WebKit.LoadStatus.FINISHED:
          case WebKit.LoadStatus.FAILED:
             mode = new InteractMode(this);
-            tainted = false;
             break;
 
          default:
@@ -526,10 +535,6 @@ class BrowserWindow : Gtk.Window {
    private WebKit.WebView spawn_view() {   
       var win = new BrowserWindow();
       win.tainted = true;
-      win.web.web_view_ready.connect(() => {
-         win.show();
-         return false;
-      });
       return win.web;
    }
 
