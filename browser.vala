@@ -505,7 +505,12 @@ class BrowserWindow : Gtk.Window {
       if (request == null)
          return null;
 
-      return (request.get_message().flags & Soup.MessageFlags.CERTIFICATE_TRUSTED) != 0;
+      var msg = request.get_message();
+
+      if (msg == null)
+         return null;
+
+      return (msg.flags & Soup.MessageFlags.CERTIFICATE_TRUSTED) != 0;
    }
 
    private void show_uri_and_title() {
@@ -516,7 +521,12 @@ class BrowserWindow : Gtk.Window {
          scheme_regex.match(current_uri, 0, out match);
 
          string color, underline;
-         if (is_trusted()) {
+         var trust = is_trusted();
+
+         if (trust == null) {
+            color = "darkgray";
+            underline = "error";
+         } else if (trust) {
             color = "green";
             underline = "single";
          } else {
