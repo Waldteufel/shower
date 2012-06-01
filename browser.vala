@@ -397,6 +397,8 @@ class BrowserWindow : Gtk.Window {
    private void filter_requests(WebKit.WebFrame frame, WebKit.WebResource resource, WebKit.NetworkRequest req, WebKit.NetworkResponse? resp) {
       if (req.message == null) return;
 
+      req.message.request_headers.append("DNT", "1");
+
       if (adblock != null && adblock.match(req.message.uri.to_string(false)))
          req.message.uri = new Soup.URI("about:blank");
 
