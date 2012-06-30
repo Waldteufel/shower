@@ -281,6 +281,7 @@ class BrowserWindow : Gtk.Window {
       // create GUI
 
       this.set_default_size(640, 480);
+      this.set_icon_name("applications-internet");
 
       var vbox = new Gtk.VBox(false, 0);
 

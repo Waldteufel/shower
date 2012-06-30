@@ -1,0 +1,8 @@
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Shower
+Comment=Eine Web-Brause
+Exec=shower
+Icon=applications-internet

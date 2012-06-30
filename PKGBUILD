@@ -1,6 +1,6 @@
 # Maintainer: Benjamin Richter <br@waldteufel.eu>
 pkgname=shower-git
-pkgver=20120209
+pkgver=20120630
 pkgrel=1
 pkgdesc="Eine Web-Brause"
 arch=('any')
@@ -49,6 +49,7 @@ build() {
 package() {
   cd "$srcdir/$_gitname-build"
   install -D --mode=755 shower "$pkgdir/usr/bin/shower"
+  install -D --mode=644 shower.desktop "$pkgdir/usr/share/applications/shower.desktop"
 }
 
 # vim:set ts=2 sw=2 et:

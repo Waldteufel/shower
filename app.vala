@@ -6,7 +6,7 @@ abstract class Application : Unique.App {
       Object(name: name);
 
       if (!this.is_running) this.initialize();
-      
+
       this.message_received.connect((cmd, data, time) => {
          this.handle_cmd(data.get_text());
          return Unique.Response.OK;
@@ -52,5 +52,5 @@ abstract class Application : Unique.App {
             return 1;
       }
    }
-   
+
 }
