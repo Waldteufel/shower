@@ -1,8 +1,11 @@
-
 [Desktop Entry]
 Version=1.0
 Type=Application
 Name=Shower
 Comment=Eine Web-Brause
-Exec=shower
+Categories=GTK;Network;WebBrowser;
+MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;image/svg+xml;
+Exec=shower %U
 Icon=applications-internet
+Terminal=false
+StartupNotify=true
