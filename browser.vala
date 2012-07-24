@@ -349,7 +349,7 @@ class BrowserWindow : Gtk.Window {
       web.load_error.connect(this.load_error);
 
       this.key_press_event.connect((press) => {
-         return mode.key_pressed(press.state & Gdk.ModifierType.MODIFIER_MASK, press.keyval);
+         return mode.key_pressed((press.state & Gtk.accelerator_get_default_mod_mask()), press.keyval);
       });
 
       if (initial_cmd == " ")
