@@ -379,6 +379,9 @@ class BrowserWindow : Gtk.Window {
          var linkuri = web.get_hit_test_result(press).link_uri;
          if (linkuri != null && !linkuri.has_prefix("javascript:")) {
             var win = new BrowserWindow(linkuri);
+            int w, h;
+            this.get_size(out w, out h);
+            win.set_default_size(w, h);
             win.show();
             return true;
          }
