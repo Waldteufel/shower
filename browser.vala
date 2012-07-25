@@ -375,7 +375,7 @@ class BrowserWindow : Gtk.Window {
 
    private bool handle_click(Gdk.EventButton press) {
       var modif = press.state & Gtk.accelerator_get_default_mod_mask();
-      if (modif == Gdk.ModifierType.CONTROL_MASK && press.button == 1) {
+      if (press.button == 2 || (modif == Gdk.ModifierType.CONTROL_MASK && press.button == 1)) {
          var linkuri = web.get_hit_test_result(press).link_uri;
          if (linkuri != null && !linkuri.has_prefix("javascript:")) {
             var win = new BrowserWindow(linkuri);
