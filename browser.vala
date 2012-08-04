@@ -95,9 +95,13 @@ class BrowserWindow : Gtk.Window {
                }
                break;
             case 0:
-               if (key == 0xff1b) { // GDK_KEY_Escape
-                  browser.mode = new InteractMode(browser);
-                  return true;
+               switch (key) {
+                  case 0xff1b: // GDK_KEY_Escape
+                     browser.mode = new InteractMode(browser);
+                     return true;
+                  case 0xffc2: // GDK_KEY_F5
+                     browser.web.reload();
+                     return true;
                }
                break;
          }

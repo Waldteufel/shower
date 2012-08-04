@@ -10,7 +10,8 @@ Ctrl+#          Go to Anchor
 Ctrl+K          Web Search (Anchor "?")
 Ctrl+Menu       Open Dashboard
 Ctrl+U          Toggle Source
-Ctrl+R          Reload
+
+Ctrl+R or F5    Reload
 
 Ctrl+F          Find
 F3              Find Next
