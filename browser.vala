@@ -238,7 +238,7 @@ class BrowserWindow : Gtk.Window {
          browser.cmdentry.text = "";
          browser.statusbar.hide();
          browser.cmdentry.show();
-         browser.cmdentry.grab_focus(); 
+         browser.cmdentry.grab_focus();
       }
 
       public CommandMode.start_with(BrowserWindow browser, string init) {
@@ -552,7 +552,7 @@ class BrowserWindow : Gtk.Window {
       this.title = web.title ?? current_uri;
    }
 
-   private WebKit.WebView spawn_view() {   
+   private WebKit.WebView spawn_view() {
       var win = new BrowserWindow();
       win.tainted = true;
       return win.web;
