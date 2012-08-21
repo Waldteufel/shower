@@ -17,7 +17,7 @@ class BrowserWindow : Gtk.Window {
       adblock_path = Path.build_filename(Environment.get_user_config_dir(), "shower", "adblock");
 
       try {
-         scheme_regex = new Regex("^([^:]+)(:.*)");
+         scheme_regex = new Regex("^([-a-zA-Z]+)(:.*)");
          https_regex = new Regex("^https://");
          anchor_regex = new Regex("^#(\\S+)\\s*(.*)");
       } catch (RegexError err) {
