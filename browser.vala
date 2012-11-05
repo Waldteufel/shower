@@ -506,7 +506,7 @@ class BrowserWindow : Gtk.Window {
       if (uri == null)
          show_uri_and_title();
       else
-         statuslabel.set_markup(Markup.printf_escaped("<span color='cyan'>%s</span>", uri));
+         statuslabel.set_markup(Markup.printf_escaped("<span color='blue'>%s</span>", uri));
    }
 
    private bool? is_trusted() {
@@ -537,7 +537,7 @@ class BrowserWindow : Gtk.Window {
             color = "darkgray";
             underline = "error";
          } else if (trust) {
-            color = "green";
+            color = "darkgreen";
             underline = "single";
          } else {
             color = "red";

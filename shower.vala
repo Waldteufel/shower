@@ -19,13 +19,6 @@ class BrowserApplication : Application {
 
    protected override void initialize() {
       Gtk.rc_parse_string("""
-         style "WhiteOnBlack" {
-            bg[NORMAL] = "black"
-            base[NORMAL] = "black"
-            fg[NORMAL] = "lightgray"
-            text[NORMAL] = "lightgray"
-         }
-
          style "Fixed8" {
             font_name = "Fixed 8"
          }
@@ -41,10 +34,6 @@ class BrowserApplication : Application {
          class "GtkScrolledWindow" style "NoSpace"
 
          widget "*statusbox" style "Border2"
-
-         widget "*cmdentry" style "WhiteOnBlack"
-         widget "*statusbar" style "WhiteOnBlack"
-         widget "*statuslabel" style "WhiteOnBlack"
 
          widget "*cmdentry" style "Fixed8"
          widget "*statuslabel" style "Fixed8"
