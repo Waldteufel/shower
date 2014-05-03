@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+# shower - "Eine Web-Brause"
+# Benjamin Richter <br@waldteufel.eu>
+
+import sys
+import signal
+
+from gi.repository import GObject, GLib, Gio, Gdk, Gtk
+
+GObject.threads_init()
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+class BrowserApp(Gtk.Application):
+    def __init__(self):
+        Gtk.Application.__init__(self,
+            application_id="eu.waldteufel.shower2",
+            flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+        self.connect('startup', BrowserApp.on_startup)
+        self.connect("command-line", BrowserApp.on_command_line)
+
+    def on_startup(self):
+        from gi.repository import WebKit2
+        ctx = WebKit2.WebContext.get_default()
+        ctx.set_process_model(WebKit2.ProcessModel.MULTIPLE_SECONDARY_PROCESSES)
+        ctx.get_cookie_manager().set_accept_policy(WebKit2.CookieAcceptPolicy.NO_THIRD_PARTY)
+
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_data("""
+            .small-bar { border: 0; border-radius: 0px; font: Monospace 8 }
+        """.encode('ascii'))
+
+        Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(),
+            css_provider, 500)
+
+    def on_command_line(self, remote):
+        import browser
+        window = browser.BrowserWindow()
+        window.set_application(self)
+        argv = remote.get_arguments()
+        if len(argv) > 1:
+            window.web.load_uri(argv[1])
+        window.show()
+        return 0
+
+if __name__ == "__main__":
+    app = BrowserApp()
+    app.run(sys.argv)
