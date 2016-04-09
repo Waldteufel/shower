@@ -1,0 +1,43 @@
+#!/usr/bin/python3
+
+import sys
+import signal
+
+from PyQt5.QtWidgets import QApplication
+from BrowserWindow import BrowserWindow
+
+import dbus
+import dbus.service
+from dbus.mainloop.pyqt5 import DBusQtMainLoop
+
+
+class BrowserService(dbus.service.Object):
+    def __init__(self):
+        busName = dbus.service.BusName('eu.waldteufel.Shower1', bus=dbus.SessionBus())
+        dbus.service.Object.__init__(self, busName, '/shower')
+
+    @dbus.service.method('eu.waldteufel.Shower1', in_signature='s', out_signature='i')
+    def open(self, url):
+        BrowserWindow(url).show()
+        return 0
+
+
+if __name__ == '__main__':
+    DBusQtMainLoop(set_as_default=True)
+    qApp = QApplication(sys.argv)
+
+    if len(qApp.arguments()) > 1:
+        url = qApp.arguments()[1]
+    else:
+        url = ''
+
+    try:
+        bus = dbus.SessionBus()
+        server = bus.get_object('eu.waldteufel.Shower1', '/shower')
+        sys.exit(server.open(url))
+    except dbus.DBusException:
+        pass
+
+    BrowserService()
+    BrowserWindow(url).show()
+    sys.exit(qApp.exec_())

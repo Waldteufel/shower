@@ -1,0 +1,10 @@
+# shower
+“eine Web-Brause”
+
+_A small application around the WebKit engine, best served with a tiling Window Manager like i3._
+
+I wrote the [first version](https://github.com/Waldteufel/shower/tree/gtk-vala) in 2011 and 2012 using Gtk and Vala.
+
+A [second version](https://github.com/Waldteufel/shower/tree/gtk-python) in Python followed in 2014, but only contains a minimum of features.
+
+This is the third iteration – also in Python, but this time using QWebEngine.
