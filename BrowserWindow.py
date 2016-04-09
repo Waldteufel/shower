@@ -3,7 +3,7 @@
 import html
 from urllib.parse import urlparse
 
-from PyQt5.QtWidgets import QApplication, QWidget, qApp, QVBoxLayout, QLineEdit, QLabel, QMainWindow, QShortcut, QProgressBar
+from PyQt5.QtWidgets import QApplication, QWidget, qApp, QVBoxLayout, QLineEdit, QLabel, QMainWindow, QShortcut, QProgressBar, QSizePolicy
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import QUrl, Qt
@@ -79,6 +79,7 @@ class BrowserWindow(QMainWindow):
         vbox.addWidget(self.progressBar)
 
         self.statusLine = QLabel()
+        self.statusLine.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.statusLine.setTextFormat(Qt.RichText)
         vbox.addWidget(self.statusLine)
 
