@@ -3,13 +3,13 @@
 import html
 from urllib.parse import urlparse
 
-from PyQt5.QtWidgets import QApplication, QWidget, qApp, QVBoxLayout, QLineEdit, QLabel, QMainWindow, QShortcut, QProgressBar, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QLabel, QShortcut, QProgressBar, QSizePolicy
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QKeySequence
+from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import QUrl, Qt
 
 
-class BrowserWindow(QMainWindow):
+class BrowserWindow(QWidget):
 
     def __init__(self, url='', windowType=QWebEnginePage.WebBrowserWindow):
         super().__init__()
@@ -66,9 +66,12 @@ class BrowserWindow(QMainWindow):
         shortcut.activated.connect(handler)
 
     def initUI(self, windowType):
+        self.setWindowTitle('shower')
+
         vbox = QVBoxLayout()
         vbox.setContentsMargins(0, 0, 0, 0)
         vbox.setSpacing(0)
+        self.setLayout(vbox)
 
         self.webView = QWebEngineView()
         vbox.addWidget(self.webView)
@@ -86,12 +89,6 @@ class BrowserWindow(QMainWindow):
         self.cmdLine = QLineEdit()
         self.cmdLine.hide()
         vbox.addWidget(self.cmdLine)
-
-        centralWidget = QWidget()
-        centralWidget.setLayout(vbox)
-
-        self.setCentralWidget(centralWidget)
-        self.setWindowTitle('shower')
 
         self.cmdLine.returnPressed.connect(self.handleCommand)
 
