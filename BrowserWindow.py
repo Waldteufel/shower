@@ -107,3 +107,4 @@ class BrowserWindow(QWidget):
         self.addShortcut("Ctrl+W", lambda: self.close())
         self.addShortcut("Ctrl+L", lambda: self.beginEnteringCommand(None))
         self.addShortcut("Ctrl+K", lambda: self.beginEnteringCommand('? '))
+        self.addShortcut("Ctrl+/", lambda: self.beginEnteringCommand('/ '))
