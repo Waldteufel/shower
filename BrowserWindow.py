@@ -44,6 +44,15 @@ class BrowserWindow(QWidget):
             self.webView.page().load(QUrl(url.geturl()))
             self.cmdLine.hide()
 
+    def toggleSource(self):
+        url = self.webView.page().url().toDisplayString()
+        prefix = 'view-source:'
+        if url.startswith(prefix):
+            url = url[len(prefix):]
+        else:
+            url = prefix + url
+        self.webView.page().load(QUrl(url))
+
     def linkHovered(self, url):
         self.hoveredUrl = url
         self.urlChanged()
@@ -109,3 +118,4 @@ class BrowserWindow(QWidget):
         self.addShortcut("Ctrl+L", lambda: self.beginEnteringCommand(None))
         self.addShortcut("Ctrl+K", lambda: self.beginEnteringCommand('? '))
         self.addShortcut("Ctrl+/", lambda: self.beginEnteringCommand('/ '))
+        self.addShortcut("Ctrl+U", lambda: self.toggleSource())
