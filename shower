@@ -39,6 +39,9 @@ if __name__ == '__main__':
 
     BrowserService()
     BrowserWindow(url).show()
-    res = qApp.exec_()
-    del qApp
+    res = 1
+    try:
+        res = qApp.exec_()
+    finally:
+        del qApp
     sys.exit(res)
