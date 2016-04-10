@@ -67,6 +67,7 @@ class BrowserWindow(QWidget):
 
     def initUI(self, windowType):
         self.setWindowTitle('shower')
+        self.setAttribute(Qt.WA_DeleteOnClose)
 
         vbox = QVBoxLayout()
         vbox.setContentsMargins(0, 0, 0, 0)
