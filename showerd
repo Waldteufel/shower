@@ -3,20 +3,38 @@
 import sys
 
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWebEngineWidgets import QWebEngineProfile
+from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
 from BrowserWindow import BrowserWindow
+from AdBlocker import AdBlocker
 
 import dbus, dbus.service
 from dbus.mainloop.pyqt5 import DBusQtMainLoop
 
+class Interceptor(QWebEngineUrlRequestInterceptor):
+
+    def __init__(self, svc):
+        super().__init__()
+        self.svc = svc
+
+    def interceptRequest(self, info):
+        if self.svc.adblocker.check(info.requestUrl(), info.resourceType()):
+            info.block(True)
+
 
 class BrowserService(dbus.service.Object):
     def __init__(self):
-        busName = dbus.service.BusName('eu.waldteufel.Shower1', bus=dbus.SessionBus())
-        dbus.service.Object.__init__(self, busName, '/shower')
+        bus_name = dbus.service.BusName('eu.waldteufel.Shower1', bus=dbus.SessionBus())
+        super().__init__(object_path='/shower', bus_name=bus_name)
+
+        self.adblocker = AdBlocker(self)
+        self.interceptor = Interceptor(self)
+        pr = QWebEngineProfile.defaultProfile()
+        pr.setRequestInterceptor(self.interceptor)
 
     @dbus.service.method('eu.waldteufel.Shower1', in_signature='s', out_signature='i')
     def open(self, url):
-        BrowserWindow(url).show()
+        BrowserWindow(self, url).show()
         return 0
 
 
