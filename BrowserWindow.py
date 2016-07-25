@@ -16,12 +16,7 @@ class BrowserPage(QWebEnginePage):
         self.window = window
 
     def acceptNavigationRequest(self, url, navType, isMainFrame):
-        if isMainFrame:
-            resourceType = 0
-        else:
-            resourceType = 1
-
-        allow = self.window.svc.adblocker.check(url, resourceType)
+        allow = True
 
         if self.window.isLatent:
             if allow:
@@ -44,8 +39,7 @@ class BrowserPage(QWebEnginePage):
             return False
 
     def createWindow(self, windowType):
-        print(windowType)
-        win = BrowserWindow(isLatent=True)
+        win = BrowserWindow(self.window.svc, isLatent=True)
         return win.webView.page()
 
 
@@ -53,7 +47,7 @@ class BrowserWindow(QWidget):
 
     urlChanged = pyqtSignal()
 
-    def __init__(self, svc, url, windowType=QWebEnginePage.WebBrowserWindow, isLatent=False):
+    def __init__(self, svc, url='', windowType=QWebEnginePage.WebBrowserWindow, isLatent=False):
         super().__init__()
         self.svc = svc
         self.hoveredUrl = ''

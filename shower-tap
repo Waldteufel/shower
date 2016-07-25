@@ -1,0 +1,2 @@
+#!/usr/bin/bash
+exec busctl --user call eu.waldteufel.Shower1 /shower eu.waldteufel.Shower1 open s "$1"
